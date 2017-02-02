@@ -8,9 +8,31 @@ transforming between a QObj and the raw vector."""
 
 from .utils import n_stabilizer_states
 
-def try_load_states(n_qubits, n_states=None):
-    pass
+import os.path as path
+import pickle
 
+
+__all__ = ['get_stabilizer_states']
+
+
+APP_DIR = path.abspath(__file__)
+
+
+def try_load_states(n_qubits, n_states=None):
+    f_string = '{0}_stabs.pkl'.format(n_qubits)
+    package_path = path.join(APP_DIR, 'data', f_string)
+    rel_path = path.join('./', f_string)
+    if path.exists(package_path):
+        with open(package_path, 'rb') as _f:
+            states = pickle.load(_f)
+    elif path.exists(rel_path):
+        with open(package_path, 'rb') as _f:
+            states = pickle.load(_f)
+    else:
+        states = None
+    if n_states is not None:
+        return states.sample(n_states)
+    return states
 
 def try_load_groups(n_qubits, n_states):
     pass
