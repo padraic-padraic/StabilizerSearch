@@ -16,26 +16,24 @@ __all__ = ['get_stabilizer_states']
 
 
 APP_DIR = path.abspath(__file__)
+STATE_STRING = '{}_stabs.pkl'
+GROUP_STRING = '{}_groups.pkl'
 
-
-def try_load_states(n_qubits, n_states=None):
-    f_string = '{0}_stabs.pkl'.format(n_qubits)
+def try_load(format_string, n_qubits, n_states=None):
+    f_string = format_string.format(n_qubits)
     package_path = path.join(APP_DIR, 'data', f_string)
     rel_path = path.join('./', f_string)
     if path.exists(package_path):
         with open(package_path, 'rb') as _f:
-            states = pickle.load(_f)
+            items = pickle.load(_f)
     elif path.exists(rel_path):
         with open(package_path, 'rb') as _f:
-            states = pickle.load(_f)
+            items = pickle.load(_f)
     else:
-        states = None
+        items = None
     if n_states is not None:
-        return states.sample(n_states)
-    return states
-
-def try_load_groups(n_qubits, n_states):
-    pass
+        return items.sample(n_states)
+    return items
 
 
 def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
@@ -55,5 +53,13 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
     use_cached = kwargs.get('use_cached', True)
     generator_func = kwargs.get('generator_backend')
     eigenstate_func = kwargs.get('eigenstate_backend')
-
+    stabilizer_states = None
+    if use_cached:
+        stabilizer_states = try_load(STATE_STRING, n_qubits, n_states)
+        if stabilizer_states is None:
+            groups = try_load(GROUP_STRING, n_qubits, n_states)
+            if groups is not None:
+                stabilizer_states = eigenstate_func(groups, n_states)
+    if stabilizer_states is None:
+        stabilizer_states = eigenstate_func(generator_func(n_qubits, n_states))
 
