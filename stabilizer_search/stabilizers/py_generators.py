@@ -6,6 +6,7 @@ from bitarray import bitarray
 from functools import reduce
 from itertools import combinations
 from random import sample, randrange, random
+from .utils import bitarray_to_pauli, get_sign_strings, n_stabilizer_states
 
 import operator as op
 
@@ -132,14 +133,19 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
             generators.append(tuple(candidate.generators))
         if len(generators) == n_states:
             break
-    phase_strings = []
-    for i in range(1, pow(2, n_qubits)): #2^n different phase strings exist
-        base = bin(i)[2:]
-        _a = bitarray(n_qubits - len(base))
-        _a.extend(base)
-        phase_strings.append(_a)
-    for ps in phase_strings:
-        for i in range(len(generators)):
-            generators.append([-1*p if b else p 
-                                    for p, b in zip(generators[i], ps)])
     return generators
+
+def get_stabilizer_groups(n_qubits, n_states):
+    positive_groups = get_positive_stabilizer_groups(n_qubits, n_states)
+    groups = [map(bitarray_to_pauli, g) for g in positive_groups]
+    sign_strings = get_sign_strings(n_qubits, n_states)
+    if n_states == n_stabilizer_states(n_qubits):
+        for _bits in sign_strings:
+            for i in range(len(groups)):
+                groups.append([-1*p if b else p 
+                                         for p, b in zip(groups[i], _bits)])
+    else:
+        for i in range(len(groups)):
+            groups[i] = [-1*p if b else p
+                                   for p, b in zip(groups[i], sign_strings[i])]
+    return groups
