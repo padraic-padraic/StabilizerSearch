@@ -3,8 +3,11 @@ from functools import reduce
 from itertools import combinations
 from random import sample, randrange, random
 
+import operator as op
 
-__all__ = ['get_stabilizer_groups']
+
+
+__all__ = ['get_positive_stabilizer_groups']
 
 
 def xnor(a,b):
@@ -61,7 +64,8 @@ def ncr(n, r):
     """Efficient evaluation of ncr, taken from StackOverflow
     http://stackoverflow.com/questions/4941753/is-there-a-math-ncr-function-in-python"""
     r = min(r, n-r)
-    if r == 0: return 1
+    if r == 0: 
+        return 1
     numer = reduce(op.mul, range(n, n-r, -1))
     denom = reduce(op.mul, range(1, r+1))
     return numer//denom
@@ -97,7 +101,7 @@ def gen_bitstrings(n):
     return bitstrings
 
 
-def get_stabilizer_groups(n_qubits, n_states):
+def get_positive_stabilizer_groups(n_qubits, n_states):
     bitstrings = gen_bitstrings(n_qubits)
     subspaces = []
     generators = []
@@ -121,4 +125,14 @@ def get_stabilizer_groups(n_qubits, n_states):
             generators.append(tuple(candidate.generators))
         if len(generators) == n_states:
             break
+    phase_strings = []
+    for i in range(1, pow(2, n_qubits)): #2^n different phase strings exist
+        base = bin(i)[2:]
+        _a = bitarray(n_qubits - len(base))
+        _a.extend(base)
+        phase_strings.append(_a)
+    for ps in phase_strings:
+        for i in range(len(generators)):
+            generators.append([-1*p if b else p 
+                                    for p, b in zip(generators[i], ps)])
     return generators
