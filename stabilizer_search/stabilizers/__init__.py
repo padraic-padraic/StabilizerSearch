@@ -6,8 +6,9 @@ Potential future plans would allow a more general representation than QObj
 states. Alternatively, we could look to implement a wrapper function capable of 
 transforming between a QObj and the raw vector."""
 
+from.eigenstates import py_find_eigenstates
 from .py_generators import get_positive_stabilizer_groups as py_positive_groups
-from .utils import n_stabilizer_states, bitarry_to_pauli, phaseify_paulis
+from .utils import n_stabilizer_states
 
 import os.path as path
 import pickle
@@ -38,6 +39,12 @@ def try_load(format_string, n_qubits, n_states=None):
     return items
 
 
+def save_to_pickle(items, format_string, n_qubits):
+    with open(path.join('./', format_string.format(n_qubits)), 'wb') as f:
+        pickle.dump(items, f)
+    return
+
+
 def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
     """Method for returning a set of stabilizer states. It takes the following 
     arguments:
@@ -53,8 +60,8 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
       builds the corresponding eigenstates.
     """
     use_cached = kwargs.get('use_cached', True)
-    generator_func = kwargs.get('generator_backend')
-    eigenstate_func = kwargs.get('eigenstate_backend')
+    generator_func = kwargs.get('generator_backend', py_positive_groups)
+    eigenstate_func = kwargs.get('eigenstate_backend', py_find_eigenstates)
     stabilizer_states = None
     if n_states is None:
         n_states = n_stabilizer_states(n_qubits)
@@ -63,7 +70,11 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
         if stabilizer_states is None:
             groups = try_load(GROUP_STRING, n_qubits, n_states)
             if groups is not None:
+                if n_states == n_stabilizer_states(n_qubits):
+                    save_to_pickle(groups, GROUP_STRING, n_qubits)
                 stabilizer_states = eigenstate_func(groups, n_states)
     if stabilizer_states is None:
         stabilizer_states = eigenstate_func(generator_func(n_qubits, n_states))
+        if use_cached:
+            save_to_pickle(stabilizer_states, STATE_STRING, n_qubits)
     return stabilizer_states

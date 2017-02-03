@@ -8,8 +8,8 @@ from qutip import qeye, sigmax, sigmay, sigmaz, tensor
 
 I = qeye(2)
 X = sigmax()
-y = sigmay()
-z = sigmaz()
+Y = sigmay()
+Z = sigmaz()
 
 
 __all__ = ['n_stabilizer_states', 'bitarray_to_pauli', 'phaseify_paulis']

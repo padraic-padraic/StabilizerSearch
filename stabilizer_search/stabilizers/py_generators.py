@@ -1,3 +1,7 @@
+"""Module which finds unique generating sets for pauli Stabilier groups using
+python code and the bitarray module."""
+
+
 from bitarray import bitarray
 from functools import reduce
 from itertools import combinations
@@ -11,6 +15,7 @@ __all__ = ['get_positive_stabilizer_groups']
 
 
 def xnor(a,b):
+    """Define the xnor operation between bitarrays"""
     return (a&b)^(~a&~b)
 
 
@@ -81,6 +86,8 @@ def random_combination(iterable, r):
 
 
 def symplectic_inner_product(n, a, b):
+    """Symplectic inner product between two Pauli operators in the binary 
+    representation; equivlanent to testing commutivity (see test_commutivity)."""
     x_a, z_a = a[:n], a[n:]
     x_b, z_b = b[:n], b[n:]
     count = (x_a&z_b).count() + (x_b&z_a).count()

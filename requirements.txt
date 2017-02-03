@@ -1,0 +1,6 @@
+## Stabilizer Search ##
+bitarray
+cython
+numpy
+scipy
+qutip
