@@ -1,8 +1,19 @@
 from . import _Search, _Result
+from ..linalg import OrthoProjector
+from ..stabilizer import get_stabilizer_states
+from itertools import combinations
+from six import PY2
 
 
 def do_BruteForce(n_qubits, target_state, *args, **kwargs):
-    pass
+    stabilizers = get_stabilizer_states(n_qubits)
+    for i in range(1, pow(2, n_qubits)):
+        for basis in combinations(stabilizers, i):
+            projector = OrthoProjector([b.full() for b in basis])
+            projection = np.linalg.norm(prif*target_state.full(), 2)
+            if np.allclose(projection, 1):
+                return True, i, basis
+    return False, pow(2, n), [qt.basis(pow(2,n), i) for i in range(pow(2, n))]
 
 
 class BruteForceResult(_Result):
@@ -15,7 +26,10 @@ class BruteForceResult(_Result):
 
     def __init__(self, *args):
         args[-1] = self.parse_decomposition(args[-1])
-        super().__init__(*args)
+        if PY2:
+            super(BruceForceResult, self).__init__(*args)
+        else:
+            super().__init__(*args)
 
     def parse_decomposition(self, decomposition):
         """Additional method for BruceForceResult that takes the decompositions
@@ -27,4 +41,6 @@ class BruteForceSearch(_Search):
     func = do_BruteForce
 
     def __init__(self, target_state, n_qubits*args, **kwargs):
+        if PY2:
+            super(BruteForceSearch, self).__init__(*args, *kwargs)
         super().__init__(*args, **kwargs)
