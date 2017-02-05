@@ -54,3 +54,15 @@ def get_sign_strings(n_qubits, n_states):
             _bits.extend(sign_num)
             sign_strings.append(_bits)
     return sign_strings
+
+def add_sign_to_groups(groups, sign_strings):
+    if len(sign_strings) != pow(2, len(sign_strings[0])):
+        for _bits in sign_strings:
+                    for i in range(len(groups)):
+                        groups.append([-1*p if b else p 
+                                            for p, b in zip(groups[i], _bits)])
+    else:
+        for i in range(len(groups)):
+            groups[i] = [-1*p if b else p
+                                   for p, b in zip(groups[i], sign_strings[i])]
+    return groups
