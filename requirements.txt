@@ -1,6 +1,7 @@
 ## Stabilizer Search ##
-bitarray
-cython
+bitarray==0.8.1
+cython==0.25.2
 numpy
 scipy
-qutip
+six==1.10.0
+qutip==3.1.0
