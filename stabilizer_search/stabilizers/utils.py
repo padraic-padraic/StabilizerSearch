@@ -1,18 +1,21 @@
 """Module that provides miscellanious functions useful when generating
 stabilizer states."""
 
+
+import numpy as np
+
 from bitarray import bitarray
 from math import pow
-from qutip import qeye, sigmax, sigmay, sigmaz, tensor
 from random import random, randrange
 
+from ..mat import qeye, X, Y, Z
+
+
 I = qeye(2)
-X = sigmax()
-Y = sigmay()
-Z = sigmaz()
 
 
-__all__ = ['n_stabilizer_states', 'bitarray_to_pauli', 'get_sign_strings']
+__all__ = ['n_stabilizer_states', 'array_to_pauli', 'get_sign_strings']
+
 
 def n_stabilizer_states(n_qubits):
     """Calculate the number of unique Stabilizer States for a given number of
@@ -23,10 +26,10 @@ def n_stabilizer_states(n_qubits):
     return res
 
 
-def bitarray_to_pauli(bits):
-    _n = len(bits)//2
+def array_to_pauli(bits):
+    n = len(bits)//2
     pauli_chain = []
-    for x, z in zip(bits[:_n], bits[_n:]):
+    for x, z in zip(bits[:n], bits[n:]):
         if not x and not z:
             pauli_chain.append(I)
         elif x and z:
@@ -34,8 +37,11 @@ def bitarray_to_pauli(bits):
         elif x and not z:
             pauli_chain.append(X)
         else:
-            pauli_chain.append(Z) 
-    return tensor(pauli_chain)
+            pauli_chain.append(Z)
+    result = pauli_chain.pop(0)
+    while pauli_chain:
+        result = np.kron(result, pauli_chain.pop(0))
+    return result
 
 
 def get_sign_strings(n_qubits, n_states):
@@ -54,6 +60,7 @@ def get_sign_strings(n_qubits, n_states):
             _bits.extend(sign_num)
             sign_strings.append(_bits)
     return sign_strings
+
 
 def add_sign_to_groups(groups, sign_strings):
     if len(sign_strings) != pow(2, len(sign_strings[0])):

@@ -4,4 +4,3 @@ cython==0.25.2
 numpy
 scipy
 six==1.10.0
-qutip==3.1.0

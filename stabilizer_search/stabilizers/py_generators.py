@@ -2,22 +2,22 @@
 python code and the bitarray module."""
 
 
-from bitarray import bitarray
-from functools import reduce
 from itertools import combinations
-from random import sample, randrange, random
-from .utils import bitarray_to_pauli, get_sign_strings, add_sign_to_groups
+from .utils import array_to_pauli, get_sign_strings, add_sign_to_groups
 
 import operator as op
-
+import numpy as np
 
 
 __all__ = ['get_positive_stabilizer_groups']
 
 
 def xnor(a,b):
-    """Define the xnor operation between bitarrays"""
     return (a&b)^(~a&~b)
+
+
+def xor(a,b):
+      return (a|b)&~(a&b)
 
 
 class BinarySubspace(object):
@@ -27,13 +27,16 @@ class BinarySubspace(object):
         self._items = []
         self.generators = []
         for val in data:
-            if not isinstance(val, bitarray):
-                raise ValueError('This class works for bitarrays only!')
+            # if not isinstance(val, bitarray):
+            if not isinstance(val, np.ndarray):
+                raise ValueError('This class works for numpy arrays only!')
+                # raise ValueError('This class works for bitarrays only!')
             self.add(val)
     
     def __contains__(self, it):
         for _el in self._items:
-            if all(xnor(_el, it)):
+            # if all(xnor(_el, it)):
+            if np.array_equal(_el, it):
                 return True
         return False
 
@@ -43,7 +46,8 @@ class BinarySubspace(object):
 
     def _generate(self, obj):
         for item in self._items:
-            new = item^obj
+            # new = item^obj
+            new = xor(item, obj)
             if new in self:
                 continue
             else:
@@ -66,32 +70,11 @@ class BinarySubspace(object):
         return self
 
 
-def ncr(n, r):
-    """Efficient evaluation of ncr, taken from StackOverflow
-    http://stackoverflow.com/questions/4941753/is-there-a-math-ncr-function-in-python"""
-    r = min(r, n-r)
-    if r == 0: 
-        return 1
-    numer = reduce(op.mul, range(n, n-r, -1))
-    denom = reduce(op.mul, range(1, r+1))
-    return numer//denom
-
-
-def random_combination(iterable, r):
-    """Random selection from itertools.combinations(iterable, r)
-    Taken from itertools.recipes on pydoc"""
-    pool = tuple(iterable)
-    n = len(pool)
-    indices = sorted(sample(range(n), r))
-    return tuple(pool[i] for i in indices)
-
-
 def symplectic_inner_product(n, a, b):
-    """Symplectic inner product between two Pauli operators in the binary 
-    representation; equivlanent to testing commutivity (see test_commutivity)."""
     x_a, z_a = a[:n], a[n:]
     x_b, z_b = b[:n], b[n:]
-    count = (x_a&z_b).count() + (x_b&z_a).count()
+    # count = (x_a&z_b).count() + (x_b&z_a).count()
+    count = np.sum((x_a&z_b)) + np.sum((x_b&z_a))
     return count%2
 
 
@@ -103,8 +86,11 @@ def gen_bitstrings(n):
     bitstrings = []
     for i in range(1, pow(2,2*n)): #We ignore the all 0 string as it corresponds to I^{n}
         bin_string = bin(i)[2:] #strip the 0b from the string
-        a = bitarray(2*n - len(bin_string))
-        a.extend(bin_string)
+        # a = bitarray(2*n - len(bin_string))
+        # a.extend(bin_string)
+        # bitstrings.append(a)
+        bin_string = '0'*(2*n - len(bin_string)) + bin_string
+        a = np.array([b == '1' for b in bin_string])
         bitstrings.append(a)
     return bitstrings
 
@@ -113,8 +99,7 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
     bitstrings = gen_bitstrings(n_qubits)
     subspaces = []
     generators = []
-    for group in random_combination(combinations(bitstrings, n_qubits),
-                                    ncr(len(bitstrings), n_qubits)):
+    for group in combinations(bitstrings, n_qubits):
         if len(group) == 2:
             if not test_commutivity(n_qubits, group[0], group[1]):
                 continue
@@ -137,6 +122,6 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
 
 def get_stabilizer_groups(n_qubits, n_states):
     positive_groups = get_positive_stabilizer_groups(n_qubits, n_states)
-    groups = [map(bitarray_to_pauli, g) for g in positive_groups]
+    groups = [map(array_to_pauli, g) for g in positive_groups]
     sign_strings = get_sign_strings(n_qubits, n_states)
     return add_sign_to_groups(positive_groups, sign_strings)

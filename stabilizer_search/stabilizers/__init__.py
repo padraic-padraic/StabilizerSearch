@@ -1,4 +1,4 @@
-"""Module for obtaining Stabilizer States as QObj instances. The main method 
+"""Module for obtaining Stabilizer States as Numpy arrays. The main method 
 provided by this module is `get_stabilizer_states`, which is also available in 
 the package namespace.
 

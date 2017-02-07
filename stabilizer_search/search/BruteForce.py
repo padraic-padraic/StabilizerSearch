@@ -1,5 +1,5 @@
 from . import _Search, _Result
-from ..linalg import OrthoProjector
+from ..linalg import ortho_projector
 from ..stabilizer import get_stabilizer_states
 from itertools import combinations
 from six import PY2
@@ -9,7 +9,7 @@ def do_BruteForce(n_qubits, target_state, *args, **kwargs):
     stabilizers = get_stabilizer_states(n_qubits)
     for i in range(1, pow(2, n_qubits)):
         for basis in combinations(stabilizers, i):
-            projector = OrthoProjector([b.full() for b in basis])
+            projector = ortho_projector([b for b in basis])
             projection = np.linalg.norm(prif*target_state.full(), 2)
             if np.allclose(projection, 1):
                 return True, i, basis
