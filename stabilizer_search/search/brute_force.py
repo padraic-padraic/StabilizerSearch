@@ -18,7 +18,7 @@ def do_BruteForce(n_qubits, target_state, *args, **kwargs):
 
 class BruteForceResult(_Result):
     ostring = """
-    The Brute Force method for the state {target_state} on {n_qubits} qubits 
+    The Brute Force method for the state {target_state} on {n_qubits} qubits
     {success}.
     We found a decomposition with stabilizer rank {chi}, which looked like:
     {decomposition}.
@@ -40,7 +40,8 @@ class BruteForceSearch(_Search):
     Result_Class = BruteForceResult
     func = do_BruteForce
 
-    def __init__(self, target_state, n_qubits*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         if PY2:
             super(BruteForceSearch, self).__init__(*args, *kwargs)
-        super().__init__(*args, **kwargs)
+        else:
+            super().__init__(*args, **kwargs)

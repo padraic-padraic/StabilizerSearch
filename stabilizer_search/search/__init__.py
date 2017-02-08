@@ -1,4 +1,6 @@
-"""The StabilizerSearch.search module defines a pair of base classes, 
+# coding: utf-8
+
+"""The StabilizerSearch.search module defines a pair of base classes,
 _Search and _Result, that are used to find and return the Stabilizer Rank
 decomposition of a given state.
 
@@ -7,7 +9,7 @@ The submodules each define a strategy for finding the Stabilizer Rank."""
 
 class _Result(object):
     """Base class to handle pretty-printing of results from a stabilizer rank
-    search. Inhertied classes should over-write ostring with a format string 
+    search. Inhertied classes should over-write ostring with a format string
     which takes the arguments:
     target_state: A string description to the target state.
     n_qubits: The number of qubits in the search
@@ -15,7 +17,7 @@ class _Result(object):
     success: Did the method converge/find a smaller stabilizer rank.
     decomposition: A string description of the decomposition found. """
     ostring = None
-    def __init__(self, target_state_string, n_qubits, chi, 
+    def __init__(self, target_state_string, n_qubits, chi,
                  success, decomposition):
         self.target_state = target_state_string
         self.n_qubits = n_qubits
@@ -62,4 +64,3 @@ class _Search(object):
                                            *self.f_args, **self.f_kwargs)
         return self.Result_Class(self.target_state_string, self.n_qubits,
                                  chi, success, decomposition)
-        
