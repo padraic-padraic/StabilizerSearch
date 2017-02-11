@@ -2,7 +2,7 @@
 generate each stabilizer group, building a projector and finding the associated 
 +1 eigenstate."""
 
-from numpy import allclose
+from numpy import allclose, imag
 from numpy.linalg import eig
 
 from ..mat import qeye
@@ -24,8 +24,11 @@ def find_eigenstate(projector):
             print(eigs)
             return None
 
-def py_find_eigenstates(generating_sets):
+def py_find_eigenstates(generating_sets, real_only=False):
     """ """
-    return map(find_eigenstate, 
+    states = map(find_eigenstate, 
                map(find_projector, generating_sets))
+    if real_only:
+        return filter(lambda x: allclose(imag(x), 0.), states)
+    return states
     #Dat functional pattern (╭☞￢ ل͜￢ )╭☞

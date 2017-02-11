@@ -58,23 +58,29 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
       generator_backend: Function which searches for the stabilizer generators
       eigenstate_backend: Function which takes sets of stabilizer generators and
       builds the corresponding eigenstates.
+      real_only: Return only real-valued stabilizer states
     """
-    use_cached = kwargs.get('use_cached', True)
-    generator_func = kwargs.get('generator_backend', py_positive_groups)
-    eigenstate_func = kwargs.get('eigenstate_backend', py_find_eigenstates)
+    use_cached = kwargs.pop('use_cached', True)
+    generator_func = kwargs.pop('generator_backend', py_positive_groups)
+    eigenstate_func = kwargs.pop('eigenstate_backend', py_find_eigenstates)
+    real_only = kwargs.pop('real_only', False)
     stabilizer_states = None
+    get_all = (n_states == n_stabilizer_states(n_qubits))
     if n_states is None:
+        get_all = True
         n_states = n_stabilizer_states(n_qubits)
     if use_cached:
         stabilizer_states = try_load(STATE_STRING, n_qubits, n_states)
         if stabilizer_states is None:
             groups = try_load(GROUP_STRING, n_qubits, n_states)
             if groups is not None:
-                if n_states == n_stabilizer_states(n_qubits):
+                if get_all:
                     save_to_pickle(groups, GROUP_STRING, n_qubits)
-                stabilizer_states = eigenstate_func(groups, n_states)
+                stabilizer_states = eigenstate_func(groups, n_states, real_only)
     if stabilizer_states is None:
-        stabilizer_states = eigenstate_func(generator_func(n_qubits, n_states))
-        if use_cached:
+        generators = generator_func(n_qubits, n_states)
+        stabilizer_states = eigenstate_func(generators, real_only)
+        if use_cached and get_all:
+            save_to_pickle(generators, GROUP_STRING, n_qubits)
             save_to_pickle(stabilizer_states, STATE_STRING, n_qubits)
     return stabilizer_states
