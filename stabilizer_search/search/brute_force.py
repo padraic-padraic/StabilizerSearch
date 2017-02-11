@@ -6,11 +6,16 @@ from six import PY2
 
 
 def do_BruteForce(n_qubits, target_state, *args, **kwargs):
+    """Function which performs the brute force search for stabilizer rank.
+    Takes a number of qubits and the target state as input, and returns
+    success: Bool, did the method succeed?
+    chi: The rank found
+    basis: the resulting decomposition"""
     stabilizers = get_stabilizer_states(n_qubits)
     for i in range(1, pow(2, n_qubits)):
         for basis in combinations(stabilizers, i):
             projector = ortho_projector([b for b in basis])
-            projection = np.linalg.norm(prif*target_state.full(), 2)
+            projection = np.linalg.norm(projector*target_state, 2)
             if np.allclose(projection, 1):
                 return True, i, basis
     return False, pow(2, n), [qt.basis(pow(2,n), i) for i in range(pow(2, n))]
