@@ -112,16 +112,19 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
             continue
         if len(candidate._items) < pow(2,n_qubits):
             continue
-        res = tuple(i for i in sorted(candidate._items))
-        if not res in subspaces:
-            subspaces.append(res)
-            generators.append(tuple(candidate.generators))
+        res = tuple(i for i in sorted(candidate._items, key=np.sum))
+        for space in subspaces:
+            if np.all([np.array_equal(_el1, _el2) for _el1, _el2 in zip(res, space)]):
+                continue        
+        subspaces.append(res)
+        generators.append(tuple(candidate.generators))
         if len(generators) == n_states:
             break
     return generators
 
 def get_stabilizer_groups(n_qubits, n_states):
     positive_groups = get_positive_stabilizer_groups(n_qubits, n_states)
+    print("Found {n} all positive groups".format(len(positive_groups)))
     groups = [map(array_to_pauli, g) for g in positive_groups]
     sign_strings = get_sign_strings(n_qubits, n_states)
     return add_sign_to_groups(positive_groups, sign_strings)

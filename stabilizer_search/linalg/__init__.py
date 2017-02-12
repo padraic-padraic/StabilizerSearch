@@ -1,1 +1,1 @@
-from .gram_schmidt import OrthoProjector
+from .gram_schmidt import ortho_projector

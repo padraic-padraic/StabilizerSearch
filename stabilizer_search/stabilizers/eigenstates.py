@@ -21,14 +21,12 @@ def find_eigenstate(projector):
         if allclose(_eig, complex(1)) or allclose(_eig, 1.):
             return vecs[:, _n]
         else:
-            print(eigs)
             return None
 
 def py_find_eigenstates(generating_sets, real_only=False):
     """ """
-    states = map(find_eigenstate, 
-               map(find_projector, generating_sets))
+    states = [find_eigenstate(x) for x in map(find_projector, generating_sets)]
     if real_only:
-        return filter(lambda x: allclose(imag(x), 0.), states)
+        return list(filter(lambda x: allclose(imag(x), 0.), states))
     return states
     #Dat functional pattern (╭☞￢ ل͜￢ )╭☞
