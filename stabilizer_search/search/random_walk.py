@@ -4,9 +4,9 @@ from ..mat import qeye
 from ..stabilizer import get_stabilizer_states
 from ..stabilizer.utils import array_to_pauli
 
-from math import pow
+from math import exp, pow
 from six import PY2
-from random import randrange
+from random import random, randrange
 
 import numpy as np
 

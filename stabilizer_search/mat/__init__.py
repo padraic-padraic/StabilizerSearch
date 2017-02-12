@@ -1,6 +1,6 @@
 """Module to hold useful matrices"""
 
-from math import exp as cexp
+from cmath import exp as cexp
 from math import pi, sqrt
 
 import numpy as np
