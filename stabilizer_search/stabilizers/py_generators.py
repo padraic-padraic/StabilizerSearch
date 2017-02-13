@@ -5,7 +5,6 @@ python code and the bitarray module."""
 from itertools import combinations
 from .utils import array_to_pauli, get_sign_strings, add_sign_to_groups
 
-import operator as op
 import numpy as np
 
 
@@ -86,9 +85,6 @@ def gen_bitstrings(n):
     bitstrings = []
     for i in range(1, pow(2,2*n)): #We ignore the all 0 string as it corresponds to I^{n}
         bin_string = bin(i)[2:] #strip the 0b from the string
-        # a = bitarray(2*n - len(bin_string))
-        # a.extend(bin_string)
-        # bitstrings.append(a)
         bin_string = '0'*(2*n - len(bin_string)) + bin_string
         a = np.array([b == '1' for b in bin_string])
         bitstrings.append(a)
@@ -124,7 +120,7 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
 
 def get_stabilizer_groups(n_qubits, n_states):
     positive_groups = get_positive_stabilizer_groups(n_qubits, n_states)
-    print("Found {n} all positive groups".format(len(positive_groups)))
-    groups = [map(array_to_pauli, g) for g in positive_groups]
+    print("Found {} positive groups".format(len(positive_groups)))
+    groups = [list(map(array_to_pauli, group)) for group in positive_groups]
     sign_strings = get_sign_strings(n_qubits, n_states)
-    return add_sign_to_groups(positive_groups, sign_strings)
+    return add_sign_to_groups(groups, sign_strings)

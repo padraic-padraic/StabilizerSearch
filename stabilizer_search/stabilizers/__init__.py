@@ -6,8 +6,8 @@ Potential future plans would allow a more general representation than QObj
 states. Alternatively, we could look to implement a wrapper function capable of 
 transforming between a QObj and the raw vector."""
 
-from.eigenstates import py_find_eigenstates
-from .py_generators import get_positive_stabilizer_groups as py_positive_groups
+from .eigenstates import py_find_eigenstates
+from .py_generators import get_stabilizer_groups as py_get_groups
 from .utils import n_stabilizer_states
 
 import os.path as path
@@ -61,7 +61,7 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
       real_only: Return only real-valued stabilizer states
     """
     use_cached = kwargs.pop('use_cached', True)
-    generator_func = kwargs.pop('generator_backend', py_positive_groups)
+    generator_func = kwargs.pop('generator_backend', py_get_groups)
     eigenstate_func = kwargs.pop('eigenstate_backend', py_find_eigenstates)
     real_only = kwargs.pop('real_only', False)
     stabilizer_states = None
@@ -80,7 +80,11 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
     if stabilizer_states is None:
         generators = generator_func(n_qubits, n_states)
         stabilizer_states = eigenstate_func(generators, real_only)
-        if use_cached and get_all:
-            save_to_pickle(generators, GROUP_STRING, n_qubits)
-            save_to_pickle(stabilizer_states, STATE_STRING, n_qubits)
-    return stabilizer_states
+        for i in range(len(generators)):
+            print(stabilizer_states[i])
+            print('\n\n')
+
+    #     if use_cached and get_all:
+    #         save_to_pickle(generators, GROUP_STRING, n_qubits)
+    #         save_to_pickle(stabilizer_states, STATE_STRING, n_qubits)
+    # return stabilizer_states

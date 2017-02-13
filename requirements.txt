@@ -1,5 +1,4 @@
 ## Stabilizer Search ##
-bitarray==0.8.1
 cython==0.25.2
 numpy
 scipy
