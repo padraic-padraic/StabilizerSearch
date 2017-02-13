@@ -82,9 +82,7 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
         stabilizer_states = eigenstate_func(generators, real_only)
         for i in range(len(generators)):
             print(stabilizer_states[i])
-            print('\n\n')
-
-    #     if use_cached and get_all:
-    #         save_to_pickle(generators, GROUP_STRING, n_qubits)
-    #         save_to_pickle(stabilizer_states, STATE_STRING, n_qubits)
-    # return stabilizer_states
+        if use_cached and get_all:
+            save_to_pickle(generators, GROUP_STRING, n_qubits)
+            save_to_pickle(stabilizer_states, STATE_STRING, n_qubits)
+    return stabilizer_states
