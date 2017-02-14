@@ -3,7 +3,7 @@ python code and the bitarray module."""
 
 
 from itertools import combinations
-from .utils import array_to_pauli, get_sign_strings, add_sign_to_groups
+from .utils import *
 
 import numpy as np
 
@@ -92,6 +92,13 @@ def gen_bitstrings(n):
 
 
 def get_positive_stabilizer_groups(n_qubits, n_states):
+    if n_states == n_stabilizer_states(n_qubits): 
+        # If generating all states, we want to focus on only the all
+        # positive signed operators
+        target = n_states/pow(2, n_qubits)
+    else:
+        #If generating less than all, we'll add signs in randomly to compenstate
+        target = n_states
     bitstrings = gen_bitstrings(n_qubits)
     subspaces = []
     generators = []
@@ -108,7 +115,7 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
             continue
         if len(candidate._items) < pow(2,n_qubits):
             continue
-        res = tuple(i for i in sorted(candidate._items, key=np.sum))
+        res = tuple(i for i in sorted(candidate._items, key=bool_to_int))
         for space in subspaces:
             if np.all([np.array_equal(_el1, _el2) for _el1, _el2 in zip(res, space)]):
                 continue        

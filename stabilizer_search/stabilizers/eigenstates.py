@@ -2,6 +2,7 @@
 generate each stabilizer group, building a projector and finding the associated 
 +1 eigenstate."""
 
+from math import pow as fpow
 from numpy import allclose, imag
 from numpy.linalg import eig
 
@@ -13,7 +14,7 @@ def find_projector(generating_set):
     res = qeye(pow(2, n_qubits))
     for _g in generating_set:
         res = res * (_id+_g)
-    return res/pow(2, n_qubits)
+    return res/fpow(2, n_qubits)
 
 def find_eigenstate(projector):
     eigs, vecs = eig(projector)

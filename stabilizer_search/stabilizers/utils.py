@@ -12,8 +12,16 @@ from ..mat import qeye, X, Y, Z
 I = qeye(2)
 
 
-__all__ = ['n_stabilizer_states', 'array_to_pauli', 'get_sign_strings']
+__all__ = ['n_stabilizer_states', 'array_to_pauli', 'get_sign_strings',
+            'bool_to_int']
 
+
+def bool_to_int(bits):
+    tot = 0
+    for i in range(len(bits)):
+        if bits[-1-i]:
+            tot += pow(2,i)
+    return tot
 
 def n_stabilizer_states(n_qubits):
     """Calculate the number of unique Stabilizer States for a given number of
@@ -43,7 +51,6 @@ def array_to_pauli(bits):
 
 
 def get_sign_strings(n_qubits, n_states):
-    print(n_states)
     sign_strings = []
     if n_states != n_stabilizer_states(n_qubits):
         for i in range(n_states):
