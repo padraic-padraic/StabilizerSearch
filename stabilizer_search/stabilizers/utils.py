@@ -56,17 +56,18 @@ def get_sign_strings(n_qubits, n_states):
     if n_states != n_stabilizer_states(n_qubits):
         for i in range(n_states):
             if random() > (1 / pow(2, n_qubits)): # Add a phase! Randomly...
-                sign_num = bin(randrange(1,pow(2,n_qubits)))[2:]
+                print('Sign num is {}'.format(sign_num))
                 sign_num = '0'*(n_qubits - len(sign_num)) + sign_num
                 _a = np.array([b == '1' for b in sign_num])
                 sign_strings.append(_a)
+            else:
+                sign_strings.append(np.array([False]*n_qubits))
     else:
         for i in range(1, pow(2, n_qubits)): #2^n -1 different phase strings exist
             sign_num = bin(i)[2:]
             sign_num = '0'*(n_qubits - len(sign_num)) + sign_num
             _a = np.array([b == '1' for b in sign_num])
             sign_strings.append(_a)
-    print(sign_strings)
     return sign_strings
 
 
