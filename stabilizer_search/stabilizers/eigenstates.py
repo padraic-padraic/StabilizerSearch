@@ -29,4 +29,3 @@ def py_find_eigenstates(generating_sets, real_only=False):
     if real_only:
         return list(filter(lambda x: allclose(imag(x), 0.), states))
     return states
-    #Dat functional pattern (╭☞￢ ل͜￢ )╭☞

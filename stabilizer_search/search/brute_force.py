@@ -55,6 +55,6 @@ class BruteForceSearch(_Search):
 
     def __init__(self, *args, **kwargs):
         if PY2:
-            super(BruteForceSearch, self).__init__(*args, *kwargs)
+            super(BruteForceSearch, self).__init__(*args, **kwargs)
         else:
             super().__init__(*args, **kwargs)

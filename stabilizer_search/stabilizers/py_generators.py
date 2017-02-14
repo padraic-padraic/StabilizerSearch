@@ -111,7 +111,6 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
             if not all([test_commutivity(n_qubits, pair[0], pair[1]) 
                         for pair in combinations(group, 2)]): 
                 continue
-        print('Passed commutivity check')
         candidate = BinarySubspace(*group)
         if len(candidate.generators) < n_qubits:
             continue
