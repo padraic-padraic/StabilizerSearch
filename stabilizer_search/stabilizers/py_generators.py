@@ -103,7 +103,7 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
     subspaces = []
     generators = []
     for group in combinations(bitstrings, n_qubits):
-        print(group)
+        groups = sorted(group, key=bool_to_int)
         if len(group) == 2:
             if not test_commutivity(n_qubits, group[0], group[1]):
                 continue
@@ -118,9 +118,9 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
         if len(candidate._items) < pow(2,n_qubits):
             continue
         res = tuple(i for i in sorted(candidate._items, key=bool_to_int))
-        for space in subspaces:
-            if np.all([np.array_equal(_el1, _el2) for _el1, _el2 in zip(res, space)]):
-                continue        
+        if np.any([np.all([np.allclose(_el1, _el2) for _el1, _el2 in zip(res, space)]) 
+                   for space in subspaces]):
+            continue
         subspaces.append(res)
         generators.append(tuple(candidate.generators))
         if len(generators) == target:
