@@ -13,7 +13,7 @@ class _Search(object):
     the method succeeded, and the resulting stabilizer rank
     and decomposition."""
     Result_Class = _Result
-    func = dummy_func
+    func = staticmethod(dummy_func)
 
     def __init__(self, target_state, target_state_string,
                  n_qubits, *args, **kwargs):

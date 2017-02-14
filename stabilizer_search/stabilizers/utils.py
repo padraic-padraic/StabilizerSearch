@@ -51,6 +51,7 @@ def array_to_pauli(bits):
 
 
 def get_sign_strings(n_qubits, n_states):
+    print('Getting sign strings for {}'.format(n_states))
     sign_strings = []
     if n_states != n_stabilizer_states(n_qubits):
         for i in range(n_states):
@@ -65,7 +66,9 @@ def get_sign_strings(n_qubits, n_states):
             sign_num = '0'*(n_qubits - len(sign_num)) + sign_num
             _a = np.array([b == '1' for b in sign_num])
             sign_strings.append(_a)
+    print(sign_strings)
     return sign_strings
+
 
 def add_sign_to_groups(groups, sign_strings):
     if len(sign_strings) == pow(2, len(sign_strings[0]))-1: # :/ That's kind of a mess

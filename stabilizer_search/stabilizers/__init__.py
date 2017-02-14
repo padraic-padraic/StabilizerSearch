@@ -30,11 +30,11 @@ def try_load(format_string, n_qubits, n_states=None):
         with open(package_path, 'rb') as _f:
             items = pickle.load(_f)
     elif path.exists(rel_path):
-        with open(package_path, 'rb') as _f:
+        with open(rel_path, 'rb') as _f:
             items = pickle.load(_f)
     else:
         items = None
-    if n_states != n_stabilizer_states(n_qubits):
+    if items is not None and n_states != n_stabilizer_states(n_qubits):
         return items.sample(n_states)
     return items
 

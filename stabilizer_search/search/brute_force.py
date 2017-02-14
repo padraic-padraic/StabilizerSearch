@@ -6,6 +6,8 @@ from ..stabilizers import get_stabilizer_states
 from itertools import combinations
 from six import PY2
 
+import numpy as np
+
 
 def do_brute_force(n_qubits, target_state, *args, **kwargs):
     """Function which performs the brute force search for stabilizer rank.
@@ -16,6 +18,7 @@ def do_brute_force(n_qubits, target_state, *args, **kwargs):
     dims = pow(2, n_qubits)
     stabilizers = get_stabilizer_states(n_qubits)
     for i in range(1, pow(2, n_qubits)):
+        print('Test with {} states.'.format(i))
         for basis in combinations(stabilizers, i):
             projector = ortho_projector([b for b in basis])
             projection = np.linalg.norm(projector*target_state, 2)
@@ -34,6 +37,7 @@ class BruteForceResult(_Result):
     """
 
     def __init__(self, *args):
+        args = list(args)
         args[-1] = self.parse_decomposition(args[-1])
         if PY2:
             super(BruteForceResult, self).__init__(*args)
@@ -47,7 +51,7 @@ class BruteForceResult(_Result):
 
 class BruteForceSearch(_Search):
     Result_Class = BruteForceResult
-    func = do_brute_force
+    func = staticmethod(do_brute_force)
 
     def __init__(self, *args, **kwargs):
         if PY2:
