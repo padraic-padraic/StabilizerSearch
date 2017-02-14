@@ -1,6 +1,24 @@
 """Submodule that provides useful linear algebra routines."""
 
+
+from scipy.linalg import lu
+
 import numpy as np
+
+
+def check_lin_independence(vectors):
+    """Gram-Schmidt only applies if vectors are linearly independent.
+    We expect this to be tha case given Stab States for a mutually unbiased 
+    basis but it's worth checking anyway."""
+    if len(vectors) == 1:
+        return True
+    M = np.zeros([len(vectors), len(vectors[0])], dtype=np.complex_)
+    for i in range(len(vectors)):
+        M[i] = vectors[i].T
+    pl, u = lu(M, permute_l=True)
+    if any([np.count_nonzero(M[i]) == 0 for i in range(len(vectors))]):
+        return False #M must be full rank for linear independence
+    return True
 
 
 def gs_prj(base, target):
@@ -11,6 +29,8 @@ def gs_prj(base, target):
 
 def gram_schmidt(vectors):
     dim = vectors[0].size
+    if not check_lin_independence(vectors):
+        return None
     V = np.matrix(np.zeros([dim,dim], dtype=np.complex_))
     U = np.matrix(np.zeros([dim,dim], dtype=np.complex_))
     for i in range(len(vectors)):

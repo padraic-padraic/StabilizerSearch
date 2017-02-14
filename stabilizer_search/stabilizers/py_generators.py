@@ -128,7 +128,8 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
 
 def get_stabilizer_groups(n_qubits, n_states):
     positive_groups = get_positive_stabilizer_groups(n_qubits, n_states)
-    print("Found {} positive groups".format(len(positive_groups)))
+    if n_states == n_stabilizer_states(n_qubits):
+        print("Found {} positive groups".format(len(positive_groups)))
     groups = [list(map(array_to_pauli, group)) for group in positive_groups]
     sign_strings = get_sign_strings(n_qubits, n_states)
     return add_sign_to_groups(groups, sign_strings)

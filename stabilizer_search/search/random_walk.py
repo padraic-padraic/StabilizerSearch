@@ -4,7 +4,7 @@ from random import random, randint, randrange
 
 from ._search import _Search
 from ._result import _Result
-from ..linalg import ortho_projector
+from ..linalg import calculate_overlap, ortho_projector
 from ..mat import qeye
 from ..stabilizers import get_stabilizer_states
 from ..stabilizers.utils import array_to_pauli
@@ -41,34 +41,6 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
     walk_steps = kwargs.pop('steps', 100)
     real = np.allclose(np.imag(target_state), 0.)
     stabilizers = get_stabilizer_states(n_qubits, chi, real_only=real)
-    print(stabilizers)
-    print("Get projector")
-    projector = ortho_projector(stabilizers)
-    print("Get Overlap")
-    overlap = np.linalg.norm(projector*target_state, 2)
-    print(overlap)
-    I = qeye(pow(2, n_qubits))
-    while True:
-        move = random_pauli(n_qubits, real)
-        target_state = randrange(chi)
-        new_state = (0.5*(I+move)) * stabilizers[target_state]
-        if np.allclose(new_state, stabilizers[target_state]):
-            continue
-        if not np.allclose(new_state, 0.): #Accept the move only if the resulting state is not null!
-            break
-    new_state = new_state / np.linalg.norm(new_state, 2)
-    print("New norm is {}".format(np.linalg.norm(new_state, 2)))
-    print(stabilizers)
-    print('\n --- \n')
-    print([s if n != target_state 
-                                else new_state for n, s in 
-                                enumerate(stabilizers)])
-    new_projector = ortho_projector([s if n != target_state 
-                                else new_state for n, s in 
-                                enumerate(stabilizers)])
-    new_overlap = np.linalg.norm(new_projector*target_state, 2)
-    print(new_overlap)
-    sys.exit()
     I = qeye(pow(2, n_qubits))
     while beta <= beta_max:
         for i in range(walk_steps):

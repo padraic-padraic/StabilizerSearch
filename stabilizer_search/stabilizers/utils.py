@@ -51,7 +51,6 @@ def array_to_pauli(bits):
 
 
 def get_sign_strings(n_qubits, n_states):
-    print('Getting sign strings for {}'.format(n_states))
     sign_strings = []
     if n_states != n_stabilizer_states(n_qubits):
         for i in range(n_states):

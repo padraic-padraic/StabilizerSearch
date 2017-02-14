@@ -2,9 +2,11 @@
 provided by this module is `get_stabilizer_states`, which is also available in 
 the package namespace.
 
-Potential future plans would allow a more general representation than QObj 
+Potential future plans would allow a more general representation than Numpy 
 states. Alternatively, we could look to implement a wrapper function capable of 
-transforming between a QObj and the raw vector."""
+transforming between a Numpy matrix and other representations."""
+
+from random import sample
 
 from .eigenstates import py_find_eigenstates
 from .py_generators import get_stabilizer_groups as py_get_groups
@@ -35,7 +37,7 @@ def try_load(format_string, n_qubits, n_states=None):
     else:
         items = None
     if items is not None and n_states != n_stabilizer_states(n_qubits):
-        return items.sample(n_states)
+        return sample(items, n_states)
     return items
 
 

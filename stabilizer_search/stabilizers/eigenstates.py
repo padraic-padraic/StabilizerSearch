@@ -20,7 +20,7 @@ def find_eigenstate(projector):
     eigs, vecs = eig(projector)
     for _n, _eig in enumerate(eigs):
         if allclose(_eig, complex(1)) or allclose(_eig, 1.):
-            return vecs[:,_n]
+            return (vecs[:,_n])
     return None
 
 def py_find_eigenstates(generating_sets, real_only=False):

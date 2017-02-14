@@ -19,7 +19,7 @@ class _Result(object):
     def __str__(self):
         if self.ostring is None:
             return """This is the base class. You should not ever be doing this.
-                   Why are you doing this. 😠"""
+                   Why are you doing this. """
         return self.ostring.format(target_state=self.target_state,
                                    n_qubits=self.n_qubits,
                                    success=self.success,
