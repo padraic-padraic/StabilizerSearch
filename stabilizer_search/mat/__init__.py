@@ -10,7 +10,7 @@ __all__=['qeye', 'X', 'Y', 'Z', 'S', 'H', 'T']
 
 
 def qeye(n):
-    return np.eye(n, dtype=np.complex_)
+    return np.eye(pow(2, n), dtype=np.complex_)
 
 
 X = np.matrix([[0,1], [1,0]], dtype=np.complex_)
