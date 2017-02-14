@@ -21,7 +21,7 @@ def do_brute_force(n_qubits, target_state, *args, **kwargs):
             projection = np.linalg.norm(projector*target_state, 2)
             if np.allclose(projection, 1):
                 return True, i, basis
-    I = qeye(n_qubits)
+    I = qeye(pow(2, n_qubits))
     return False, dims, [I[:,i].reshape(dims, 1) for i in range(dims)]
 
 

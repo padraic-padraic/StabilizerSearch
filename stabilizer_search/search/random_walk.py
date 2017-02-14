@@ -41,7 +41,7 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
     walk_steps = kwargs.pop('steps', 100)
     real = np.allclose(np.imag(target_state, 0.))
     stabilizers = get_stabilizer_states(n_qubits, chi, real_only=real)
-    I = qeye(n_qubits)
+    I = qeye(pow(2, n_qubits))
     while beta <= beta_max:
         for i in range(walk_steps):
             projector = ortho_projector(stabilizers)

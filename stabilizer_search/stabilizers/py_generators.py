@@ -121,7 +121,7 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
                 continue        
         subspaces.append(res)
         generators.append(tuple(candidate.generators))
-        if len(generators) == n_states:
+        if len(generators) == target:
             break
     return generators
 

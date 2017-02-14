@@ -19,9 +19,7 @@ def find_projector(generating_set):
 def find_eigenstate(projector):
     eigs, vecs = eig(projector)
     for _n, _eig in enumerate(eigs):
-        print(_n, _eig)
         if allclose(_eig, complex(1)) or allclose(_eig, 1.):
-            print('Succeeded')
             return vecs[:,_n]
     return None
 

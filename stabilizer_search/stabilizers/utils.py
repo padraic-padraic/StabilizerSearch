@@ -13,7 +13,7 @@ I = qeye(2)
 
 
 __all__ = ['n_stabilizer_states', 'array_to_pauli', 'get_sign_strings',
-            'bool_to_int']
+            'bool_to_int', 'add_sign_to_groups']
 
 
 def bool_to_int(bits):
@@ -67,11 +67,10 @@ def get_sign_strings(n_qubits, n_states):
             sign_strings.append(_a)
     return sign_strings
 
-
 def add_sign_to_groups(groups, sign_strings):
     if len(sign_strings) == pow(2, len(sign_strings[0]))-1: # :/ That's kind of a mess
-        for _bits in sign_strings:
-                    for i in range(len(groups)):
+        for i in range(len(groups)):
+            for _bits in sign_strings:
                         groups.append([-1*p if b else p 
                                             for p, b in zip(groups[i], _bits)])
         print('Added sign to produce {} total groups'.format(len(groups)))
