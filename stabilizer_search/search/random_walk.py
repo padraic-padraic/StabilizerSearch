@@ -1,12 +1,13 @@
-from . import _Search, _Result
-from ..lingalg import ortho_projector
-from ..mat import qeye
-from ..stabilizer import get_stabilizer_states
-from ..stabilizer.utils import array_to_pauli
-
 from math import exp, pow
 from six import PY2
 from random import random, randrange
+
+from ._search import _Search
+from ._result import _Result
+from ..linalg import ortho_projector
+from ..mat import qeye
+from ..stabilizers import get_stabilizer_states
+from ..stabilizers.utils import array_to_pauli
 
 import numpy as np
 
@@ -32,11 +33,11 @@ def random_pauli(n_qubits, real_only):
             break
     return array_to_pauli(bits)
 
-def do_RandomWalk(n_qubits, target_state, chi, **kwargs):
+def do_random_walk(n_qubits, target_state, chi, **kwargs):
     beta = kwargs.pop('beta_init', 1)
     beta_max = kwargs.pop('beta_max', 4000)
     anneal_steps = kwargs.pop('M', 1000)
-    b_diff = (beta_max-beta)/anneal_steps
+    beta_diff = (beta_max-beta)/anneal_steps
     walk_steps = kwargs.pop('steps', 100)
     real = np.allclose(np.imag(target_state, 0.))
     stabilizers = get_stabilizer_states(n_qubits, chi, real_only=real)
@@ -54,9 +55,10 @@ def do_RandomWalk(n_qubits, target_state, chi, **kwargs):
                 if not np.allclose(new_state, 0.): #Accept the move only if the resulting state is not null!
                     break
             new_state /= np.linalg.norm(new_state, 2) #Normalize!
-            new_projector = ortho_projector([s for n, s in enumerate(states) if 
-                                            n != target_state else new_state])
-            new_overlap = np.lingalg.norm(new_projector*target_state, 2)
+            new_projector = ortho_projector([s if n != target_state 
+                                            else new_state for n, s in 
+                                            enumerate(stabilizers)])
+            new_overlap = np.linalg.norm(new_projector*target_state, 2)
             if new_overlap > overlap:
                 stabilizers[target_state] = new_state
             else:
@@ -89,7 +91,7 @@ class RandomWalkResult(_Result):
 
 class RandomWalkSearch(_Search):
     Result_Class = RandomWalkResult
-    func = do_RandomWalk
+    func = do_random_walk
 
     def __init__(self, *args, **kwargs):
         if PY2:

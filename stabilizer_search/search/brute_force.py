@@ -1,16 +1,19 @@
-from . import _Search, _Result
+from ._search import _Search
+from ._result import _Result
 from ..linalg import ortho_projector
-from ..stabilizer import get_stabilizer_states
+from ..mat import qeye
+from ..stabilizers import get_stabilizer_states
 from itertools import combinations
 from six import PY2
 
 
-def do_BruteForce(n_qubits, target_state, *args, **kwargs):
+def do_brute_force(n_qubits, target_state, *args, **kwargs):
     """Function which performs the brute force search for stabilizer rank.
     Takes a number of qubits and the target state as input, and returns
     success: Bool, did the method succeed?
     chi: The rank found
     basis: the resulting decomposition"""
+    dims = pow(2, n_qubits)
     stabilizers = get_stabilizer_states(n_qubits)
     for i in range(1, pow(2, n_qubits)):
         for basis in combinations(stabilizers, i):
@@ -18,7 +21,8 @@ def do_BruteForce(n_qubits, target_state, *args, **kwargs):
             projection = np.linalg.norm(projector*target_state, 2)
             if np.allclose(projection, 1):
                 return True, i, basis
-    return False, pow(2, n), [qt.basis(pow(2,n), i) for i in range(pow(2, n))]
+    I = qeye(n_qubits)
+    return False, dims, [I[:,i].reshape(dims, 1) for i in range(dims)]
 
 
 class BruteForceResult(_Result):
@@ -32,7 +36,7 @@ class BruteForceResult(_Result):
     def __init__(self, *args):
         args[-1] = self.parse_decomposition(args[-1])
         if PY2:
-            super(BruceForceResult, self).__init__(*args)
+            super(BruteForceResult, self).__init__(*args)
         else:
             super().__init__(*args)
 
@@ -43,7 +47,7 @@ class BruteForceResult(_Result):
 
 class BruteForceSearch(_Search):
     Result_Class = BruteForceResult
-    func = do_BruteForce
+    func = do_brute_force
 
     def __init__(self, *args, **kwargs):
         if PY2:
