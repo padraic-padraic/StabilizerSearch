@@ -4,7 +4,7 @@ stabilizer states."""
 
 import numpy as np
 
-from random import random, randrange
+from random import random, randint
 
 from ..mat import qeye, X, Y, Z
 
@@ -56,7 +56,7 @@ def get_sign_strings(n_qubits, n_states):
     if n_states != n_stabilizer_states(n_qubits):
         for i in range(n_states):
             if random() > (1 / pow(2, n_qubits)): # Add a phase! Randomly...
-                print('Sign num is {}'.format(sign_num))
+                sign_num = bin(randint(1, pow(2, n_qubits)))[2:]
                 sign_num = '0'*(n_qubits - len(sign_num)) + sign_num
                 _a = np.array([b == '1' for b in sign_num])
                 sign_strings.append(_a)
