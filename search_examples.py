@@ -1,6 +1,7 @@
 from math import sqrt
 from stabilizer_search import BruteForceSearch, RandomWalkSearch
 from stabilizer_search.mat import X, T
+from stabilizer_search.mat.haar_random import get_su2
 
 import numpy as np
 import timeit
