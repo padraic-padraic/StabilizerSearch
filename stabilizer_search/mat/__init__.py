@@ -4,7 +4,7 @@ from cmath import exp as cexp
 from math import pi, sqrt
 
 from .haar_random import get_so2, get_su2
-from .py_haar_random import get_su2
+from .py_haar_random import pyget_su2
 
 
 import numpy as np
