@@ -12,7 +12,8 @@ class _Result(object):
                  success, decomposition):
         self.target_state = target_state_string
         self.n_qubits = n_qubits
-        self.success = 'succeeded' if success else 'did not succeed'
+        self.success = success
+        self.success_string = 'succeeded' if success else 'did not succeed'
         self.chi = chi
         self.decomposition = decomposition
 
@@ -22,6 +23,6 @@ class _Result(object):
                    Why are you doing this. """
         return self.ostring.format(target_state=self.target_state,
                                    n_qubits=self.n_qubits,
-                                   success=self.success,
+                                   success=self.success_string,
                                    chi = self.chi,
                                    decomposition=self.decomposition)

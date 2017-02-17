@@ -15,7 +15,7 @@ EXTENSIONS = [
 
 setup(
     name='stabilizer_search',
-    version='1.0.1.post1',
+    version='1.0.2',
     url="https://github.com/padraic-padraic/StabilizerSearch",
     author="Padraic Calpin",
     description='Stabilizer Search',
