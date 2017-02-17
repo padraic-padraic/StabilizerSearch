@@ -1,0 +1,5 @@
+global-include *.pyx
+global-include *.px
+include stabilizer_search/mat/haarrandom.h
+include stabilizer_search/mat/haarrandom.c
+include stabilizer_search/mat/haarrandom.a
