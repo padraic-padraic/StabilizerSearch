@@ -18,6 +18,7 @@ setup(
     version='1.0.0',
     url="https://github.com/padraic-padraic/StabilizerSearch",
     author="Padraic Calpin",
+    description='Stabilizer Search',
     license="GPLv3.0",
     keywords='quantum computing stabilizers simulation',
     packages=find_packages(exclude=['tests', '*tests']),
