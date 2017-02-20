@@ -1,6 +1,32 @@
 from Cython.Build import cythonize
 from setuptools import setup, find_packages
+from setuptools.command.build_ext import build_ext
+from setuptools.command.install import install
 from setuptools.extension import Extension
+
+import os
+import subprocess
+
+def pre_build_dependencies():
+    build_root = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(os.path.join(build_root, 'stabilizer_search', 'mat'))
+    subprocess.call(["make", "clean"])
+    subprocess.call(["make", "all"])
+    os.chdir(build_root)
+
+
+class PreBuildInstall(install):
+
+    def run(self):
+        pre_build_dependencies()
+        install.run(self)
+
+
+class PreBuildExt(build_ext):
+
+    def run(self):
+        pre_build_dependencies()
+        build_ext.run(self)
 
 EXTENSIONS = [
     Extension(
@@ -13,9 +39,10 @@ EXTENSIONS = [
         )
 ]
 
+
 setup(
     name='stabilizer_search',
-    version='1.0.2',
+    version='1.0.3',
     url="https://github.com/padraic-padraic/StabilizerSearch",
     author="Padraic Calpin",
     description='Stabilizer Search',
@@ -26,5 +53,7 @@ setup(
         'stabilizer_search.stabilizers':['/data/*.pkl']
     },
     install_requires=['cython', 'numpy', 'scipy', 'six'],
-    ext_modules=cythonize(EXTENSIONS)
+    ext_modules=cythonize(EXTENSIONS),
+    cmdclass={'install': PreBuildInstall,
+              'build_ext': PreBuildExt}
 )
