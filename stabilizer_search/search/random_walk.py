@@ -34,37 +34,38 @@ def random_pauli(n_qubits, real_only):
     return array_to_pauli(bits)
 
 def do_random_walk(n_qubits, target_state, chi, **kwargs):
+    print('Searching with chi={}'.format(chi))
     beta = kwargs.pop('beta_init', 1)
     beta_max = kwargs.pop('beta_max', 4000)
-    anneal_steps = kwargs.pop('M', 1000)
+    anneal_steps = kwargs.pop('M', 100)
     beta_diff = (beta_max-beta)/anneal_steps
-    walk_steps = kwargs.pop('steps', 100)
+    walk_steps = kwargs.pop('steps', 1000)
     real = np.allclose(np.imag(target_state), 0.)
     stabilizers = get_stabilizer_states(n_qubits, chi, real_only=real)
     I = qeye(pow(2, n_qubits))
     while beta <= beta_max:
         for i in range(walk_steps):
-            projector = ortho_projector(stabilizers)
+            projector = ortho_projector([s for s in stabilizers])
             overlap = np.linalg.norm(projector*target_state, 2)
             if np.allclose(overlap, 1.):
                 return True, chi, stabilizers
             while True:
                 move = random_pauli(n_qubits, real)
-                target_state = randrange(chi)
-                new_state = (I+move) * stabilizers[target_state]
+                move_target = randrange(chi)
+                new_state = (I+move) * stabilizers[move_target]
                 if not np.allclose(new_state, 0.): #Accept the move only if the resulting state is not null!
                     break
             new_state = new_state / np.linalg.norm(new_state, 2)
-            new_projector = ortho_projector([s if n != target_state 
+            new_projector = ortho_projector([s if n != move_target 
                                             else new_state for n, s in 
                                             enumerate(stabilizers)])
             new_overlap = np.linalg.norm(new_projector*target_state, 2)
             if new_overlap > overlap:
-                stabilizers[target_state] = new_state
+                stabilizers[move_target] = new_state
             else:
                 p_accept = exp(-beta*(overlap - new_overlap))
                 if random() < p_accept:
-                    stabilizers[target_state] = new_state
+                    stabilizers[move_target] = new_state
         beta += beta_diff
     return False, chi, None
 
@@ -77,6 +78,7 @@ class RandomWalkResult(_Result):
 
     def __init__(self, *args):
         args = list(args)
+        self.basis = args[-1]
         args[-1] = self.parse_decomposition(args[-1])
         if PY2:
             super(RandomWalkResult, self).__init__(*args)

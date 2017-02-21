@@ -38,6 +38,7 @@ class BruteForceResult(_Result):
 
     def __init__(self, *args):
         args = list(args)
+        self.basis = args[-1]
         args[-1] = self.parse_decomposition(args[-1])
         if PY2:
             super(BruteForceResult, self).__init__(*args)
