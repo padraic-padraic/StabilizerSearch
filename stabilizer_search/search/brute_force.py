@@ -6,6 +6,7 @@ from ..stabilizers import get_stabilizer_states
 from itertools import combinations
 from math import factorial
 from six import PY2
+from random import shuffle
 
 import numpy as np
 
@@ -21,6 +22,7 @@ def do_brute_force(n_qubits, target_state, chi=None, **kwargs):
     basis: the resulting decomposition"""
     dims = pow(2, n_qubits)
     stabilizers = get_stabilizer_states(n_qubits)
+    shuffle(stabilizers)
     if chi is None:       
         for i in range(1, pow(2, n_qubits)):
             print('Test with {} states.'.format(i))
@@ -39,7 +41,7 @@ def do_brute_force(n_qubits, target_state, chi=None, **kwargs):
             projection = np.linalg.norm(projector*target_state, 2)
             if np.allclose(projection, 1):
                 return True, chi, basis
-        return False, I, None
+        return False, chi, None
 
 
 class BruteForceResult(_Result):
