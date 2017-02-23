@@ -29,10 +29,11 @@ def gs_prj(base, target):
 
 def gram_schmidt(vectors):
     dim = vectors[0].size
-    if not check_lin_independence(vectors):
-        return None
-    V = np.matrix(np.zeros([dim,dim], dtype=np.complex_))
-    U = np.matrix(np.zeros([dim,dim], dtype=np.complex_))
+    n = len(vectors)
+    # if not check_lin_independence(vectors):
+    #     return None
+    V = np.matrix(np.zeros([dim,n], dtype=np.complex_))
+    U = np.matrix(np.zeros([dim,n], dtype=np.complex_))
     for i in range(len(vectors)):
         V[:,i] = vectors[i]
     for i in range(len(vectors)):

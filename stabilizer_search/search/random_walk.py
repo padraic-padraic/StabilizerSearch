@@ -23,7 +23,7 @@ def test_real(n_qubits, bits):
 
 def random_pauli(n_qubits, real_only):
     while True:
-        base = bin(randint(0, pow(2, n_qubits)))[2:]
+        base = bin(randint(0, pow(2, 2*n_qubits)))[2:]
         bits = '0'*(2*n_qubits - len(base)) + base
         bits = np.array([b == '1' for b in bits])
         if real_only:

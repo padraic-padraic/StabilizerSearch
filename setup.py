@@ -4,8 +4,12 @@ from setuptools.command.build_ext import build_ext
 from setuptools.command.install import install
 from setuptools.extension import Extension
 
+import numpy
 import os
 import subprocess
+
+NUMPY_INC = numpy.get_include()
+print(NUMPY_INC)
 
 def pre_build_dependencies():
     build_root = os.path.dirname(os.path.abspath(__file__))
@@ -35,19 +39,25 @@ EXTENSIONS = [
         include_dirs=['./stabilizer_search/mat/'],
         library_dirs=['./stabilizer_search/mat/'],
         libraries=["m"],
-        extra_objects=["./stabilizer_search/mat/haarrandom.a"]
+        extra_objects=["./stabilizer_search/mat/haarrandom.a"],
         ),
     Extension(
         "stabilizer_search.stabilizers.cy_eigenstates",
         ["stabilizer_search/stabilizers/cy_eigenstates.pyx"],
-        libraries=["m"]
+        include_dirs=[NUMPY_INC],
+        libraries=["m"],
+        ),
+    Extension(
+        "stabilizer_search.linalg.cy_gram_schmidt",
+        ["stabilizer_search/linalg/cy_gram_schmidt.pyx"],
+        include_dirs=[NUMPY_INC]
         )
 ]
 
 
 setup(
     name='stabilizer_search',
-    version='1.0.4',
+    version='1.0.5',
     url="https://github.com/padraic-padraic/StabilizerSearch",
     author="Padraic Calpin",
     description='Stabilizer Search',
