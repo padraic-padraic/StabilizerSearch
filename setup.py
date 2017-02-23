@@ -36,6 +36,11 @@ EXTENSIONS = [
         library_dirs=['./stabilizer_search/mat/'],
         libraries=["m"],
         extra_objects=["./stabilizer_search/mat/haarrandom.a"]
+        ),
+    Extension(
+        "stabilizer_search.stabilizers.cy_eigenstates",
+        ["stabilizer_search/stabilizers/cy_eigenstates.pyx"],
+        libraries=["m"]
         )
 ]
 

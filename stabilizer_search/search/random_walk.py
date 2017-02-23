@@ -68,13 +68,11 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
             # print('New Overlap is {}'.format(new_overlap))
             if new_overlap > overlap:
                 overlap = new_overlap
-                projector = new_projector
                 stabilizers[move_target] = new_state
             else:
                 p_accept = exp(-beta*(overlap - new_overlap))
                 if random() < p_accept:
                     overlap = new_overlap
-                    projector = new_projector
                     stabilizers[move_target] = new_state
             if overlap > max_overlap:
                 max_overlap = overlap
