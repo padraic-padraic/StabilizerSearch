@@ -70,8 +70,8 @@ def get_sign_strings(n_qubits, n_states):
     return sign_strings
 
 
-def add_sign_to_groups(groups, sign_strings):
-    if len(sign_strings) == pow(2, len(sign_strings[0]))-1: # :/ That's kind of a mess
+def add_sign_to_groups(groups, sign_strings, extend):
+    if extend:
         for i in range(len(groups)):
             for _bits in sign_strings:
                         groups.append([-1*p if b else p 

@@ -3,6 +3,7 @@ python code and the bitarray module."""
 
 
 from itertools import combinations
+from random import shuffle
 from .utils import *
 
 import numpy as np
@@ -100,6 +101,7 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
         #If generating less than all, we'll add signs in randomly to compenstate
         target = n_states
     bitstrings = gen_bitstrings(n_qubits)
+    shuffle(bitstrings)
     subspaces = []
     generators = []
     for group in combinations(bitstrings, n_qubits):
@@ -128,8 +130,10 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
 
 def get_stabilizer_groups(n_qubits, n_states):
     positive_groups = get_positive_stabilizer_groups(n_qubits, n_states)
+    extend = False
     if n_states == n_stabilizer_states(n_qubits):
+        extend = True
         print("Found {} positive groups".format(len(positive_groups)))
     groups = [list(map(array_to_pauli, group)) for group in positive_groups]
     sign_strings = get_sign_strings(n_qubits, n_states)
-    return add_sign_to_groups(groups, sign_strings)
+    return add_sign_to_groups(groups, sign_strings, extend)

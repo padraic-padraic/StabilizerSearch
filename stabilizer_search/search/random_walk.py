@@ -31,22 +31,27 @@ def random_pauli(n_qubits, real_only):
                 break
         else:
             break
-    return array_to_pauli(bits)
+    pauli = array_to_pauli(bits)
+    if random() > 0.5:
+        return -1* pauli
+    return pauli
 
 def do_random_walk(n_qubits, target_state, chi, **kwargs):
     print('Searching with chi={}'.format(chi))
     beta = kwargs.pop('beta_init', 1)
     beta_max = kwargs.pop('beta_max', 4000)
-    anneal_steps = kwargs.pop('M', 100)
+    anneal_steps = kwargs.pop('steps', 100)
     beta_diff = (beta_max-beta)/anneal_steps
-    walk_steps = kwargs.pop('steps', 1000)
+    walk_steps = kwargs.pop('M', 1000)
     real = np.allclose(np.imag(target_state), 0.)
     stabilizers = get_stabilizer_states(n_qubits, chi, real_only=real)
     I = qeye(pow(2, n_qubits))
+    projector = ortho_projector([s for s in stabilizers])
+    overlap = np.linalg.norm(projector*target_state, 2)
+    max_overlap = overlap
     while beta <= beta_max:
+        # print("Anneal Progress : {}%".format((beta-1)/beta_diff))
         for i in range(walk_steps):
-            projector = ortho_projector([s for s in stabilizers])
-            overlap = np.linalg.norm(projector*target_state, 2)
             if np.allclose(overlap, 1.):
                 return True, chi, stabilizers
             while True:
@@ -60,13 +65,21 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
                                             else new_state for n, s in 
                                             enumerate(stabilizers)])
             new_overlap = np.linalg.norm(new_projector*target_state, 2)
+            # print('New Overlap is {}'.format(new_overlap))
             if new_overlap > overlap:
+                overlap = new_overlap
+                projector = new_projector
                 stabilizers[move_target] = new_state
             else:
                 p_accept = exp(-beta*(overlap - new_overlap))
                 if random() < p_accept:
+                    overlap = new_overlap
+                    projector = new_projector
                     stabilizers[move_target] = new_state
+            if overlap > max_overlap:
+                max_overlap = overlap
         beta += beta_diff
+    print('Max overlap was {}'.format(max_overlap))
     return False, chi, None
 
 class RandomWalkResult(_Result):

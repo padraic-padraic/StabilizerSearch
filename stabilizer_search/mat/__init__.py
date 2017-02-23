@@ -33,3 +33,10 @@ S = np.matrix([[1, 0], [0, 1j]], dtype=np.complex_)
 
 
 T = np.matrix([[1, 0], [0, cexp(1j*pi/4)]], dtype=np.complex_)
+
+def tensor(*args):
+    matrices = list(args)
+    out = matrices.pop(0)
+    while matrices:
+        out = np.kron(out, matrices.pop(0))
+    return out
