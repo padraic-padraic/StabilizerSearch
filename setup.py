@@ -51,13 +51,19 @@ EXTENSIONS = [
         "stabilizer_search.linalg.cy_gram_schmidt",
         ["stabilizer_search/linalg/cy_gram_schmidt.pyx"],
         include_dirs=[NUMPY_INC]
-        )
+        ),
+    Extension(
+        "stabilizer_search.search.cy_do_random_walk",
+        ["stabilizer_search/search/cy_do_random_walk.pyx"],
+        include_dirs=["./stabilizer_search/linalg/", NUMPY_INC],
+        libraries=["m"]
+    )
 ]
 
 
 setup(
     name='stabilizer_search',
-    version='1.0.5',
+    version='1.1.0',
     url="https://github.com/padraic-padraic/StabilizerSearch",
     author="Padraic Calpin",
     description='Stabilizer Search',
@@ -68,7 +74,7 @@ setup(
         'stabilizer_search.stabilizers':['/data/*.pkl']
     },
     install_requires=['cython', 'numpy', 'scipy', 'six'],
-    ext_modules=cythonize(EXTENSIONS),
+    ext_modules=cythonize(EXTENSIONS, include_path=["./stabilizer_search/mat/", "./stabilizer_search/linalg/"]),
     cmdclass={'install': PreBuildInstall,
               'build_ext': PreBuildExt}
 )
