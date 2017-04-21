@@ -102,7 +102,7 @@ class RandomWalkResult(_Result):
 
 class RandomWalkSearch(_Search):
     Result_Class = RandomWalkResult
-    func = staticmethod(cy_do_random_walk)
+    func = staticmethod(do_random_walk)
 
     def __init__(self, *args, **kwargs):
         _f = kwargs.pop('func', None)
