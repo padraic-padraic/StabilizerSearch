@@ -4,6 +4,7 @@ from random import random, randint, randrange
 
 from ._search import _Search
 from ._result import _Result
+from .cy_do_random_walk import cy_do_random_walk
 from ..linalg import calculate_overlap, ortho_projector
 from ..mat import qeye
 from ..stabilizers import get_stabilizer_states
@@ -23,7 +24,7 @@ def test_real(n_qubits, bits):
 
 def random_pauli(n_qubits, real_only):
     while True:
-        base = bin(randint(0, pow(2, 2*n_qubits)))[2:]
+        base = bin(randint(1, pow(2, 2*n_qubits)))[2:]
         bits = '0'*(2*n_qubits - len(base)) + base
         bits = np.array([b == '1' for b in bits])
         if real_only:
@@ -37,7 +38,7 @@ def random_pauli(n_qubits, real_only):
     return pauli
 
 def do_random_walk(n_qubits, target_state, chi, **kwargs):
-    print('Searching with chi={}'.format(chi))
+    # print('Searching with chi={}'.format(chi))
     beta = kwargs.pop('beta_init', 1)
     beta_max = kwargs.pop('beta_max', 4000)
     anneal_steps = kwargs.pop('steps', 100)
@@ -48,7 +49,6 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
     I = qeye(pow(2, n_qubits))
     projector = ortho_projector([s for s in stabilizers])
     overlap = np.linalg.norm(projector*target_state, 2)
-    max_overlap = overlap
     while beta <= beta_max:
         # print("Anneal Progress : {}%".format((beta-1)/beta_diff))
         for i in range(walk_steps):
@@ -74,10 +74,7 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
                 if random() < p_accept:
                     overlap = new_overlap
                     stabilizers[move_target] = new_state
-            if overlap > max_overlap:
-                max_overlap = overlap
         beta += beta_diff
-    print('Max overlap was {}'.format(max_overlap))
     return False, chi, None
 
 class RandomWalkResult(_Result):
@@ -108,7 +105,11 @@ class RandomWalkSearch(_Search):
     func = staticmethod(do_random_walk)
 
     def __init__(self, *args, **kwargs):
+        _f = kwargs.pop('func', None)
+        if _f is not None:
+            self.func = staticmethod(_f)
         if PY2:
             super(RandomWalkSearch, self).__init__(*args, **kwargs)
         else:
             super().__init__(*args, **kwargs)
+

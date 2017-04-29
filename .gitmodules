@@ -1,0 +1,3 @@
+[submodule "stabilizer_search/clib/StabilizerCPP"]
+	path = stabilizer_search/clib/StabilizerCPP
+	url = https://github.com/padraic-padraic/StabilizerCPP.git

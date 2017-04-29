@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <haarrandom.h>
+#include <time.h>
 
 
 long double r(void){
@@ -9,6 +10,7 @@ long double r(void){
 }
 
 long double ** random_so2(void){
+    srand(time(NULL));
     long double ** mat = malloc(2*sizeof(long double complex *));
     mat[0] = calloc(2, sizeof(long double complex));
     mat[1] = calloc(2, sizeof(long double complex));
@@ -21,6 +23,7 @@ long double ** random_so2(void){
 }
 
 long double complex ** random_su2(void){
+    srand(time(NULL));
     long double psi, chi, phi;
     phi = asinl(sqrtl(r()));
     chi = r()*2*M_PI;

@@ -34,9 +34,15 @@ S = np.matrix([[1, 0], [0, 1j]], dtype=np.complex_)
 
 T = np.matrix([[1, 0], [0, cexp(1j*pi/4)]], dtype=np.complex_)
 
-ROOT_T = np.matrix([[1,0], [0, cexp(1j*pi/8)]], dtype=np.complex_)
+ROOT_T = np.matrix([[1, 0], [0, cexp(1j*pi/8)]], dtype=np.complex_)
 
-ROOT_ROOT_T = np.matrix([[1,0], [0, cexp(1j*pi/16)]], dtype=np.complex_)
+
+ROOT_ROOT_T = np.matrix([[1, 0], [0, cexp(1j*pi/16)]], dtype=np.complex_)
+
+
+CCZ = np.matrix([[1,0,0,0,0,0,0,0], [0,1,0,0,0,0,0,0], [0,0,1,0,0,0,0,0], [0,0,0,1,0,0,0,0],
+				 [0,0,0,0,1,0,0,0], [0,0,0,0,0,1,0,0], [0,0,0,0,0,0,1,0], [0,0,0,0,0,0,0,-1]], dtype=np.complex_)
+
 
 
 def tensor(*args):
