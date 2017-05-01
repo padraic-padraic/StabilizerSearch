@@ -10,30 +10,35 @@ from random import sample
 
 from .eigenstates import py_find_eigenstates
 from .py_generators import get_stabilizer_groups as py_get_groups
-from .utils import n_stabilizer_states
+from .utils import n_stabilizer_states, states_from_file, states_to_file, gens_from_file, gens_to_file
 
 import os.path as path
-import pickle
 
 
 __all__ = ['get_stabilizer_states']
 
 
 APP_DIR = path.abspath(__file__)
-STATE_STRING = '{}_stabs.pkl'
-GROUP_STRING = '{}_groups.pkl'
+STATE_STRING = '{}.states'
+GROUP_STRING = '{}.generators'
+LOAD_METHODS = {'states':states_from_file,
+               'generators':gens_from_file}
+WRITE_METHODS = {'states': states_to_file,
+                 'generators': gens_to_file} 
 
-
-def try_load(format_string, n_qubits, n_states=None):
+def try_load(_type, format_string, n_qubits, n_states=None):
+    if(_type != 'states' or _type !='generators'):
+        raise KeyError("Don't know how to load: "+_type)
+    loader = LOAD_METHODS[_type]
     f_string = format_string.format(n_qubits)
     package_path = path.join(APP_DIR, 'data', f_string)
     rel_path = path.join('./', f_string)
     if path.exists(package_path):
         with open(package_path, 'rb') as _f:
-            items = pickle.load(_f)
+            items = loader(_f, n_qubits)
     elif path.exists(rel_path):
         with open(rel_path, 'rb') as _f:
-            items = pickle.load(_f)
+            items = loader(_f, n_qubits)
     else:
         items = None
     if items is not None and n_states != n_stabilizer_states(n_qubits):
@@ -41,9 +46,12 @@ def try_load(format_string, n_qubits, n_states=None):
     return items
 
 
-def save_to_pickle(items, format_string, n_qubits):
+def save_to_file(_type, items, format_string, n_qubits):
+    if _type != 'states' or _type !='generators':
+        raise KeyError("Don't know how to store " + _type)
+    writer = WRITE_METHODS[_type]
     with open(path.join('./', format_string.format(n_qubits)), 'wb') as f:
-        pickle.dump(items, f)
+        writer(items, f)
     return
 
 
@@ -65,24 +73,24 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
     use_cached = kwargs.pop('use_cached', True)
     generator_func = kwargs.pop('generator_backend', py_get_groups)
     eigenstate_func = kwargs.pop('eigenstate_backend', py_find_eigenstates)
-    real_only = kwargs.pop('real_only', False)
+    # real_only = kwargs.pop('real_only', False)
     stabilizer_states = None
     get_all = (n_states == n_stabilizer_states(n_qubits))
     if n_states is None:
         get_all = True
         n_states = n_stabilizer_states(n_qubits)
     if use_cached:
-        stabilizer_states = try_load(STATE_STRING, n_qubits, n_states)
+        stabilizer_states = try_load('states',STATE_STRING, n_qubits, n_states)
         if stabilizer_states is None:
-            groups = try_load(GROUP_STRING, n_qubits, n_states)
+            groups = try_load('generators', GROUP_STRING, n_qubits, n_states)
             if groups is not None:
                 if get_all:
-                    save_to_pickle(groups, GROUP_STRING, n_qubits)
+                    save_to_file('generators',groups, GROUP_STRING, n_qubits)
                 stabilizer_states = eigenstate_func(groups, n_states, real_only)
     if stabilizer_states is None:
         generators = generator_func(n_qubits, n_states)
         stabilizer_states = eigenstate_func(generators, real_only)
         if use_cached and get_all:
-            save_to_pickle(generators, GROUP_STRING, n_qubits)
-            save_to_pickle(stabilizer_states, STATE_STRING, n_qubits)
+            save_to_file('generators', generators, GROUP_STRING, n_qubits)
+            save_to_file('states', stabilizer_states, STATE_STRING, n_qubits)
     return stabilizer_states
