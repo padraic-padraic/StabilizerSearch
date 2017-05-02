@@ -1,5 +1,8 @@
 global-include *.pyx
-global-include *.px
+global-include *.pxd
 include stabilizer_search/clib/haar_random/haarrandom.h
 include stabilizer_search/clib/haar_random/haarrandom.c
 include stabilizer_search/clib/haar_random/Makefile
+graft stabilizer_search/clib/StabilizerCPP/src
+graft stabilizer_search/clib/StabilizerCPP/src/lib
+graft stabilizer_search/clib/StabilizerCPP/CMake

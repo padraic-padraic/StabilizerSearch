@@ -39,7 +39,6 @@ EXTENSIONS = [
         ["stabilizer_search/mat/haar_random.pyx"],
         include_dirs=['./stabilizer_search/clib/haar_random/'],
         library_dirs=['./stabilizer_search/clib/haar_random/'],
-        libraries=["m"],
         extra_objects=["./stabilizer_search/clib/haar_random/haarrandom.a"],
         ),
     Extension(
@@ -59,6 +58,17 @@ EXTENSIONS = [
         include_dirs=["./stabilizer_search/linalg/", NUMPY_INC],
         libraries=["m"]
     )
+    # Extension(
+    #     "stabilizer_search.stabilizers.c_generators",
+    #     ["stabilizer_search/stabilizers/c_generators.pyx"],
+    #     include_dirs=["./stabilizer_search/clib",
+    #                   "./stabilizer_search/clib/StabilizerCPP/src",
+    #                   NUMPY_INC],
+    #     library_dirs=["./stabilizer_search/clib/StabilizerCPP/out/"],
+    #     libraries=["libsymplectic_stabilizer"],
+    #     extra_objects=["./stabilizer_search/clib/StabilizerCPP/out/libsymplectic_stabilizer.a"],
+    #     language="c++"
+    #     )
 ]
 
 
