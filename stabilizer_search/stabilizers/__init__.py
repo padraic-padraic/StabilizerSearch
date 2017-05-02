@@ -89,7 +89,7 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
                 stabilizer_states = eigenstate_func(groups, n_states)#, real_only)
     if stabilizer_states is None:
         generators = generator_func(n_qubits, n_states)
-        stabilizer_states = eigenstate_func(generators)#, real_only)
+        stabilizer_states = eigenstate_func(generators, n_states)#, real_only)
         if use_cached and get_all:
             save_to_file('generators', generators, GROUP_STRING, n_qubits)
             save_to_file('states', stabilizer_states, STATE_STRING, n_qubits)

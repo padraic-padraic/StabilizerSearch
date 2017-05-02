@@ -31,10 +31,9 @@ def find_eigenstate(projector):
             return state
     return None
 
-def py_find_eigenstates(generating_sets):
+def py_find_eigenstates(generating_sets, n_states):
     """ """
     n_qubits = len(generating_sets[0])
-    n_states = len(generating_sets)
     phase_strings = get_sign_strings(n_qubits, n_states)
     if n_states==n_stabilizer_states(n_qubits):
         generating_sets = add_sign_to_groups(generating_sets, phase_strings, True)
