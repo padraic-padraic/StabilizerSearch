@@ -42,10 +42,13 @@ EXTENSIONS = [
         extra_objects=["./stabilizer_search/clib/haar_random/haarrandom.a"],
         ),
     Extension(
+        "stabilizer_search.stabilizers.cy_generators",
+        ["stabilizer_search/stabilizers/cy_generators.pyx"],
+        include_dirs=[NUMPY_INC, "stabilizer_search/stabilizers/"]),
+    Extension(
         "stabilizer_search.stabilizers.cy_eigenstates",
         ["stabilizer_search/stabilizers/cy_eigenstates.pyx"],
         include_dirs=[NUMPY_INC],
-        libraries=["m"],
         ),
     Extension(
         "stabilizer_search.linalg.cy_gram_schmidt",

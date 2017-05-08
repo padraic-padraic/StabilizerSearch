@@ -9,7 +9,7 @@ transforming between a Numpy matrix and other representations."""
 from random import sample
 
 from .eigenstates import py_find_eigenstates
-from .py_generators import get_stabilizer_groups as py_get_groups
+from .py_generators import get_positive_stabilizer_groups as py_get_groups
 from .utils import n_stabilizer_states, states_from_file, states_to_file, gens_from_file, gens_to_file
 
 import os.path as path

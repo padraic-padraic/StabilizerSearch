@@ -4,48 +4,57 @@
 import numpy as np
 cimport numpy as np
 
+from .utils import array_to_pauli, get_sign_strings, n_stabilizer_states
+
 from libc.math cimport pow as fpow
 
 DTYPE=np.complex128
 ctypedef np.complex128_t DTYPE_t
+boolish = np.int8
+ctypedef np.int8_t bool_t
 
-
-cpdef find_projector(list generating_set):
-    cdef int n_qubits = len(generating_set)
-    cdef np.ndarray[DTYPE_t, ndim=2] _id = np.identity(pow(2, n_qubits), dtype=np.complex128)
-    cdef np.ndarray[DTYPE_t, ndim=2] res = np.identity(pow(2, n_qubits), dtype=np.complex128)
-    for _g in generating_set:
-        res = res * (_id+_g)
-    cdef double norm = fpow(2, n_qubits)
-    return res/norm
-
-
-cpdef find_eigenstate(np.ndarray[DTYPE_t, ndim=2] projector):
-    cdef np.ndarray[DTYPE_t, ndim=1] eigs
-    cdef double complex _eig
-    cdef np.ndarray[DTYPE_t, ndim=2] vecs
-    eigs, vecs = np.linalg.eig(projector)
-    cdef unsigned int _n
-    cdef np.ndarray[DTYPE_t, ndim=2] state
-    cdef np.ndarray[np.float64_t, ndim=2] r, im
-    cdef double real=1
-    cdef DTYPE_t comp=1.
-    for _n, _eig in enumerate(eigs):
-        if np.allclose(_eig, comp) or np.allclose(_eig, real):
-            state = (vecs[:,_n])
-            r = np.real(state)
-            im = np.imag(state)
-            r[np.isclose(r, 0.)] = 0
-            im[np.isclose(im, 0.)] = 0
-            state = r+1j*im
-            state = state / np.linalg.norm(state, 2)
+cdef np.ndarray[DTYPE_t, ndim=1] get_eigenstate(list paulis):
+    cdef unsigned int  dim = paulis[0].shape[0], i
+    cdef np.ndarray[DTYPE_t, ndim=1] eigenvalues, state
+    cdef np.ndarray[DTYPE_t, ndim=2] projector, identity, eigenvectors
+    identity = np.identity(dim, dtype=np.complex128)
+    projector = np.identity(dim, dtype=np.complex128)
+    for p in paulis:
+        projector *= (0.5*(identity+p))
+    eigenvalues, eigenvectors = np.linalg.eig(projector)
+    for i in range(len(eigenvalues)):
+        if np.allclose(np.abs(eigenvalues[i]), 1.):
+            state = eigenvectors[:,i]
             return state
-    return None
 
 
-def cy_find_eigenstates(list generating_sets, real_only=False):
-    cdef np.ndarray[DTYPE_t, ndim=2] x
-    states = [find_eigenstate(x) for x in map(find_projector, generating_sets)]
-    if real_only:
-        return list(filter(lambda x: np.allclose(np.imag(x), 0.), states))
+cpdef cy_get_eigenstates(list positive_groups, unsigned int n_states):
+    cdef unsigned int nqubits = len(positive_groups[0]), i, j
+    cdef np.ndarray[bool_t, ndim=1, cast=True] p_string
+    cdef list phase_strings, pauli_workspace, states, phase_workspace
+    states = []
+    pauli_workspace = [0]*nqubits
+    phase_workspace = [0]*nqubits
+    phase_strings = get_sign_strings(nqubits, n_states)
+    if n_states == n_stabilizer_states(nqubits):
+        #Extending the groups mode. 
+        for i in range(len(positive_groups)):
+            for j in range(nqubits):
+                pauli_workspace[j] = array_to_pauli(positive_groups[i][j])
+            states.append(get_eigenstate(pauli_workspace))
+            for p_string in phase_strings:
+                for j in range(nqubits):
+                    if p_string[i]==0:
+                        phase_workspace[j] = pauli_workspace[j]
+                    else:
+                        pauli_workspace[j] = -1*pauli_workspace[j]
+                states.append(get_eigenstate(phase_workspace))
+    else:
+        #Replacing the groups mode
+        for i in range(n_states):
+            for j in range(nqubits):
+                pauli_workspace[j] = array_to_pauli(positive_groups[i][j])
+                if phase_strings[i][j] == 1:
+                    pauli_workspace[j] *= -1
+            states.append(get_eigenstate(pauli_workspace))
     return states
