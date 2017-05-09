@@ -30,7 +30,7 @@ def n_stabilizer_states(n_qubits):
     res = pow(2., n_qubits)
     for i in range(n_qubits):
         res *= (pow(2., n_qubits-i)+1)
-    return res
+    return int(res)
 
 
 def array_to_pauli(bits):
@@ -131,7 +131,7 @@ def group_to_file(gen_set, _f):
 
 def gens_to_file(generators, _f):
     n_qubits = len(generators[0])
-    n_positive_groups = n_stabilizer_states(n_qubits)//pow(2,n_qubits)
+    n_positive_groups = n_stabilizer_states(n_qubits) // pow(2,n_qubits)
     for i in range(n_positive_groups):
         group_to_file(generators[i], _f)
 

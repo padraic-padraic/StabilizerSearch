@@ -15,9 +15,9 @@ def pre_build_dependencies():
     os.chdir(os.path.join(build_root, 'stabilizer_search', 'clib', 'haar_random'))
     subprocess.call(["make", "clean"])
     subprocess.call(["make", "all"])
-    os.chdir(os.path.join(build_root, 'stabilizer_search', 'clib', 'StabilizerCPP'))
-    subprocess.call(["cmake", "-DBUILD_TESTING=OFF", "-DBUILD_EXECUTABLE=OFF", "./"])
-    subprocess.call(["make"])
+    # os.chdir(os.path.join(build_root, 'stabilizer_search', 'clib', 'StabilizerCPP'))
+    # subprocess.call(["cmake", "-DBUILD_TESTING=OFF", "-DBUILD_EXECUTABLE=OFF", "./"])
+    # subprocess.call(["make"])
     os.chdir(build_root)
 
 class PreBuildInstall(install):
@@ -37,7 +37,8 @@ EXTENSIONS = [
     Extension(
         "stabilizer_search.mat.haar_random",
         ["stabilizer_search/mat/haar_random.pyx"],
-        include_dirs=['./stabilizer_search/clib/haar_random/'],
+        include_dirs=['./stabilizer_search/clib/haar_random/',
+                      './stabilizer_search/mat/'],
         library_dirs=['./stabilizer_search/clib/haar_random/'],
         extra_objects=["./stabilizer_search/clib/haar_random/haarrandom.a"],
         ),

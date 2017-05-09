@@ -15,13 +15,14 @@ ctypedef np.int8_t bool_t
 
 cdef np.ndarray[DTYPE_t, ndim=1] get_eigenstate(list paulis):
     cdef unsigned int  dim = paulis[0].shape[0], i
-    cdef np.ndarray[DTYPE_t, ndim=1] eigenvalues, state
-    cdef np.ndarray[DTYPE_t, ndim=2] projector, identity, eigenvectors
+    cdef np.ndarray[np.float64_t, ndim=1] eigenvalues
+    cdef np.ndarray[DTYPE_t, ndim=2] projector, identity, eigenvectors, state
     identity = np.identity(dim, dtype=np.complex128)
     projector = np.identity(dim, dtype=np.complex128)
     for p in paulis:
-        projector *= (0.5*(identity+p))
-    eigenvalues, eigenvectors = np.linalg.eig(projector)
+        projector = projector * (identity+p)
+    projector = fpow(2, -1*len(paulis)) * projector
+    eigenvalues, eigenvectors = np.linalg.eigh(projector)
     for i in range(len(eigenvalues)):
         if np.allclose(np.abs(eigenvalues[i]), 1.):
             state = eigenvectors[:,i]
@@ -44,10 +45,10 @@ cpdef cy_get_eigenstates(list positive_groups, unsigned int n_states):
             states.append(get_eigenstate(pauli_workspace))
             for p_string in phase_strings:
                 for j in range(nqubits):
-                    if p_string[i]==0:
+                    if p_string[j]==0:
                         phase_workspace[j] = pauli_workspace[j]
                     else:
-                        pauli_workspace[j] = -1*pauli_workspace[j]
+                        phase_workspace[j] = -1*pauli_workspace[j]
                 states.append(get_eigenstate(phase_workspace))
     else:
         #Replacing the groups mode
