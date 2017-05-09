@@ -140,7 +140,8 @@ def states_to_file(states, _f):
     for state in states:
         _f.write('STATE\n')
         for _el in state:
-            _f.write('({}, {})'.format(np.real(_el), np.imag(_el)))
+            _f.write('({}, {})\n'.format(np.asscalar(np.real(_el)), 
+                                       np.asscalar(np.imag(_el))))
         _f.write('ENDSTATE\n\n')
 
 

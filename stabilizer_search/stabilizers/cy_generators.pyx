@@ -8,6 +8,7 @@ cimport numpy as np
 
 import itertools
 
+from .utils import n_stabilizer_states
 
 DTYPE = np.int8
 ctypedef np.int8_t DTYPE_t
@@ -142,7 +143,12 @@ cdef class StabilizerMatrix:
                     i+=1
 
 
-cpdef get_positive_groups(unsigned int nQubits):
+cpdef get_positive_groups(unsigned int nQubits, unsigned int nStates):
+    cdef unsigned int target
+    if nStates == n_stabilizer_states(nQubits):
+        target = nStates / pow(2, nQubits)
+    else: #TODO: Handle the case where nstates > n_positive but < all
+        target = nStates
     cdef list paulis
     cdef list groups
     paulis = []
@@ -159,4 +165,6 @@ cpdef get_positive_groups(unsigned int nQubits):
         if candidate.linearly_independent():
             if not candidate in groups:
                 groups.append(candidate)
+        if len(groups)==target:
+            break
     return [np.asarray(g.sMatrix) for g in groups]

@@ -8,8 +8,8 @@ transforming between a Numpy matrix and other representations."""
 
 from random import sample
 
-from .eigenstates import py_find_eigenstates
-from .py_generators import get_positive_stabilizer_groups as py_get_groups
+from .cy_eigenstates import cy_get_eigenstates
+from .cy_generators import get_positive_groups as cy_get_groups
 from .utils import n_stabilizer_states, states_from_file, states_to_file, gens_from_file, gens_to_file
 
 import os.path as path
@@ -27,17 +27,17 @@ WRITE_METHODS = {'states': states_to_file,
                  'generators': gens_to_file} 
 
 def try_load(_type, format_string, n_qubits, n_states=None):
-    if(_type != 'states' or _type !='generators'):
+    loader = LOAD_METHODS.get(_type, None)
+    if loader is None:
         raise KeyError("Don't know how to load: "+_type)
-    loader = LOAD_METHODS[_type]
     f_string = format_string.format(n_qubits)
     package_path = path.join(APP_DIR, 'data', f_string)
     rel_path = path.join('./', f_string)
     if path.exists(package_path):
-        with open(package_path, 'rb') as _f:
+        with open(package_path, 'r') as _f:
             items = loader(_f, n_qubits)
     elif path.exists(rel_path):
-        with open(rel_path, 'rb') as _f:
+        with open(rel_path, 'r') as _f:
             items = loader(_f, n_qubits)
     else:
         items = None
@@ -47,10 +47,10 @@ def try_load(_type, format_string, n_qubits, n_states=None):
 
 
 def save_to_file(_type, items, format_string, n_qubits):
-    if _type != 'states' or _type !='generators':
+    writer = WRITE_METHODS.get(_type, None)
+    if writer is None:
         raise KeyError("Don't know how to store " + _type)
-    writer = WRITE_METHODS[_type]
-    with open(path.join('./', format_string.format(n_qubits)), 'wb') as f:
+    with open(path.join('./', format_string.format(n_qubits)), 'w') as f:
         writer(items, f)
     return
 
@@ -71,8 +71,8 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
       real_only: Return only real-valued stabilizer states
     """
     use_cached = kwargs.pop('use_cached', True)
-    generator_func = kwargs.pop('generator_backend', py_get_groups)
-    eigenstate_func = kwargs.pop('eigenstate_backend', py_find_eigenstates)
+    generator_func = kwargs.pop('generator_backend', cy_get_groups)
+    eigenstate_func = kwargs.pop('eigenstate_backend', cy_get_eigenstates)
     # real_only = kwargs.pop('real_only', False)
     stabilizer_states = None
     get_all = (n_states == n_stabilizer_states(n_qubits))
