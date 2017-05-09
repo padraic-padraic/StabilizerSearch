@@ -86,7 +86,8 @@ setup(
     keywords='quantum computing stabilizers simulation',
     packages=find_packages(exclude=['tests', '*tests']),
     package_data={
-        'stabilizer_search.stabilizers':['/data/*.pkl']
+        'stabilizer_search.stabilizers':['/data/*.states',
+                                         '/data/*.generators']
     },
     install_requires=['cython', 'numpy', 'scipy', 'six'],
     ext_modules=cythonize(EXTENSIONS, include_path=["./stabilizer_search/mat/", "./stabilizer_search/linalg/"]),
