@@ -8,8 +8,8 @@ transforming between a Numpy matrix and other representations."""
 
 from random import sample
 
-from .cy_eigenstates import cy_get_eigenstates
-from .cy_generators import get_positive_groups as cy_get_groups
+from .eigenstates import py_find_eigenstates
+from .py_generators import get_positive_stabilizer_groups as py_get_groups
 from .utils import n_stabilizer_states, states_from_file, states_to_file, gens_from_file, gens_to_file
 
 import os.path as path
@@ -71,8 +71,8 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
       real_only: Return only real-valued stabilizer states
     """
     use_cached = kwargs.pop('use_cached', True)
-    generator_func = kwargs.pop('generator_backend', cy_get_groups)
-    eigenstate_func = kwargs.pop('eigenstate_backend', cy_get_eigenstates)
+    generator_func = kwargs.pop('generator_backend', py_get_groups)
+    eigenstate_func = kwargs.pop('eigenstate_backend', py_find_eigenstates)
     # real_only = kwargs.pop('real_only', False)
     stabilizer_states = None
     get_all = (n_states == n_stabilizer_states(n_qubits))

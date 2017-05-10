@@ -8,7 +8,8 @@ cimport numpy as np
 
 import itertools
 
-from .utils import n_stabilizer_states
+from .utils import n_stabilizer_states, array_to_string
+from .py_generators import test_commutivity
 
 DTYPE = np.int8
 ctypedef np.int8_t DTYPE_t
@@ -24,7 +25,7 @@ cdef np.ndarray[DTYPE_t, ndim=1] num_to_pauli(unsigned int nqubits,
     bits = np.zeros(2*nqubits, dtype=np.int8)
     cdef unsigned int i
     for i in range(2*nqubits):
-        bits[i] = bitstring[i]=='1'
+        bits[i] = (bitstring[i]=='1')
     return bits
 
 cdef bint commutes(p1, p2):
@@ -45,8 +46,11 @@ cpdef paulis_commute(tuple paulis):
 
 
 cdef class StabilizerMatrix:
+
     cdef public unsigned int nQubits
     cdef public char [:,:] sMatrix
+
+
     def __init__(self, tuple generators, nQubits=None):
         cdef unsigned int i, j
         if nQubits is None:
@@ -58,6 +62,7 @@ cdef class StabilizerMatrix:
                 self.sMatrix[i, j] = generators[i][j]
         self.__to_canonical_form()
     
+
     def __richcmp__(StabilizerMatrix x, StabilizerMatrix y, int op):
         if op != 2 and op != 3:
             raise NotImplementedError('Order comparisons are meaningless for StabilizerMatrices')
@@ -74,73 +79,85 @@ cdef class StabilizerMatrix:
             return False
         return True
 
-    cdef bint isIdentity(self, unsigned int row):
+
+    cpdef bint isIdentity(self, unsigned int row):
         cdef unsigned int i
         for i in range(2*self.nQubits):
             if self.sMatrix[row, i] != falsey:
                 return False
         return True
 
-    cdef bint isXY(self, unsigned int row, unsigned int qubit):
+
+    cpdef bint isXY(self, unsigned int row, unsigned int qubit):
         if (self.sMatrix[row, qubit]==truey):
             return True
         return False
 
-    cdef bint isZ(self, unsigned int row, unsigned int qubit):
+
+    cpdef bint isZ(self, unsigned int row, unsigned int qubit):
         if (self.sMatrix[row, qubit]==falsey and 
             self.sMatrix[row, qubit+self.nQubits]==truey):
             return True
         return False
 
-    cdef bint isZY(self, unsigned int row, unsigned int qubit):
+
+    cpdef bint isZY(self, unsigned int row, unsigned int qubit):
         if (self.sMatrix[row, qubit+self.nQubits]==truey):
             return True
         return False
 
-    cdef bint linearly_independent(self):
+
+    cpdef bint linearly_independent(self):
         cdef unsigned int i
-        for i in range(self.nQubits):
-            if self.isIdentity(i):
-                return False
+        i = np.linalg.matrix_rank(self.sMatrix)
+        if i < self.nQubits:
+            return False
         return True
 
-    cdef void rowMult(self, unsigned int i, unsigned int k):
-        cdef unsigned int index
-        for index in range(self.nQubits):
-            self.sMatrix[i,index] = (self.sMatrix[i, index] ^ 
-                                    self.sMatrix[k, index])
 
-    cdef void rowSwap(self, unsigned int i, unsigned int k):
+    cpdef void rowMult(self, unsigned int i, unsigned int k):
+        cdef unsigned int index
+        cdef char scratch
+        for index in range(self.nQubits):
+            scratch = self.sMatrix[i, index]^self.sMatrix[k, index]
+            self.sMatrix[i,index] = scratch
+
+
+    cpdef void rowSwap(self, unsigned int i, unsigned int k):
         cdef unsigned int transpose_scratch
         cdef unsigned int index
+        cdef char scratch
         for index in range(2*self.nQubits):
             transpose_scratch = self.sMatrix[k, index]
             self.sMatrix[k, index] = self.sMatrix[i, index]
             self.sMatrix[i, index] = transpose_scratch
 
-    # cdef void rowMod(self, unsigned int i):
-    #     cdef unsigned int index
-    #     for index in range(2*self.nQubits):
-    #         self.sMatrix[i, index] = (self.sMatrix[i, index] % base)
 
-    cdef void __to_canonical_form(self):
-        cdef unsigned int i = 0, j, k, m
+    cpdef void __to_canonical_form(self):
+        cdef unsigned int i = 0, j, k, m, index
         for j in range(self.nQubits):
             for k in range(i, self.nQubits):
                 if self.isXY(k,j):
                     self.rowSwap(i,k)
                     for m in range(self.nQubits):
                         if m != i and self.isXY(m, j):
-                            self.rowMult(m, i)
+                            self.rowMult(m,i)
+                            # for index in range(2*self.nQubits):
+                            #     scratch = self.sMatrix[i,index]^self.sMatrix[m, index]
+                            #     self.sMatrix[m, index] = scratch
                     i+=1
         for j in range(self.nQubits):
             for k in range(i, self.nQubits):
-                if self.isZY(k, j):
+                if self.isZ(k, j):
                     self.rowSwap(i, k)
                     for m in range(self.nQubits):
                         if m!= i and self.isZY(m, j):
-                            self.rowMult(m, i)
+                            # for index in range(2*self.nQubits):
+                            #     scratch = self.sMatrix[i,index]^self.sMatrix[m, index]
+                            #     self.sMatrix[m, index] = scratch
+                            self.rowMult(m,i)
                     i+=1
+        return
 
 
 cpdef get_positive_groups(unsigned int nQubits, unsigned int nStates):
@@ -165,6 +182,6 @@ cpdef get_positive_groups(unsigned int nQubits, unsigned int nStates):
         if candidate.linearly_independent():
             if not candidate in groups:
                 groups.append(candidate)
-        if len(groups)==target:
-            break
+        # if len(groups)==target:
+        #     break
     return [np.asarray(g.sMatrix) for g in groups]

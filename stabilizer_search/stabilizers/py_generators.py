@@ -61,7 +61,7 @@ class BinarySubspace(object):
 
     def add(self, obj):
         for _el in self._items:
-            if all(xnor(obj, _el)):
+            if np.all(xnor(obj, _el)):
                 return self
         self.order +=1
         self.generators.append(obj)
@@ -69,6 +69,68 @@ class BinarySubspace(object):
         self._generate(obj)
         return self
 
+
+class StabilizerMatrix(object):
+
+    def __init__(self, generators):
+        self.n_qubits = len(generators)
+        self.sMatrix = np.zeros((self.n_qubits, 2*self.n_qubits), dtype=np.bool)
+        for n, g in enumerate(generators):
+            self.sMatrix[n] = g
+        try:
+            self.__to_canonical_form()
+        except:
+            for g in generators:
+                print(array_to_string(g))
+
+    def isZ(self, row, qubit):
+        if self.sMatrix[row, qubit]:
+            return False
+        if self.sMatrix[row, qubit+self.n_qubits]:
+            return True
+        return False
+
+    def isZY(self, row, qubit):
+        if self.sMatrix[row, qubit+self.n_qubits]:
+            return True
+        return False
+
+    def isXY(self, row, qubit):
+        if self.sMatrix[row, qubit]:
+            return True
+        return False
+
+    def rowMult(self, row1, row2):
+        self.sMatrix[row1] = np.logical_xor(self.sMatrix[row1], 
+                                            self.sMatrix[row2])
+
+    @property
+    def linearly_independent(self):
+        return np.linalg.matrix_rank(self.sMatrix) == self.n_qubits
+
+    def __to_canonical_form(self):
+        i = 0
+        for j in range(self.n_qubits):
+            for k in range(self.n_qubits):
+                if self.isXY(k, j):
+                    self.sMatrix[[i,k]] = self.sMatrix[[k,i]]
+                    for m in range(self.n_qubits):
+                        if m!= i and self.isXY(m, j):
+                            self.rowMult(m,i)
+                    i+=1
+                    break
+        for j in range(self.n_qubits):
+            for k in range(self.n_qubits):
+                if self.isZ(k,j):
+                    self.sMatrix[[i,k]] = self.sMatrix[[k,i]]
+                    for m in range(self.n_qubits):
+                        if m!= i and self.isZY(m, j):
+                            self.rowMult(m, i)
+                    i+=1
+                    break
+
+    def __eq__(self, other):
+        return np.array_equal(self.sMatrix, other.sMatrix)
 
 def symplectic_inner_product(n, a, b):
     x_a, z_a = a[:n], a[n:]
@@ -92,6 +154,12 @@ def gen_bitstrings(n):
     return bitstrings
 
 
+def paulis_commute(n_qubits, paulis):
+    for p1, p2 in combinations(paulis, 2):
+        if not test_commutivity(n_qubits, p1, p2):
+            return False
+    return True
+
 def get_positive_stabilizer_groups(n_qubits, n_states):
     if n_states == n_stabilizer_states(n_qubits): 
         # If generating all states, we want to focus on only the all
@@ -105,25 +173,26 @@ def get_positive_stabilizer_groups(n_qubits, n_states):
     subspaces = []
     generators = []
     for group in combinations(bitstrings, n_qubits):
-        groups = sorted(group, key=bool_to_int)
-        if len(group) == 2:
-            if not test_commutivity(n_qubits, group[0], group[1]):
-                continue
-        if len(group) > 2:
-            if not all([test_commutivity(n_qubits, pair[0], pair[1]) 
-                        for pair in combinations(group, 2)]): 
-                continue
+        if not paulis_commute(n_qubits, group):
+            continue
+        if np.linalg.matrix_rank(np.matrix(group)) < n_qubits:
+            continue
         candidate = BinarySubspace(*group)
         if len(candidate.generators) < n_qubits:
             continue
         if len(candidate._items) < pow(2,n_qubits):
             continue
+        # candidate = StabilizerMatrix(group)
+        # if not candidate.linearly_independent:
+        #     continue
         res = tuple(i for i in sorted(candidate._items, key=bool_to_int))
         if np.any([np.all([np.allclose(_el1, _el2) for _el1, _el2 in zip(res, space)]) 
                    for space in subspaces]):
             continue
         subspaces.append(res)
         generators.append(tuple(candidate.generators))
+        # if not candidate in generators:
+        #     generators.append(candidate)
         if len(generators) == target:
             break
     return generators

@@ -19,7 +19,7 @@ cdef np.ndarray[DTYPE_t, ndim=1] get_eigenstate(list paulis):
     identity = np.identity(dim, dtype=np.complex128)
     projector = np.identity(dim, dtype=np.complex128)
     for p in paulis:
-        projector = projector * (identity+p)
+        projector = projector.dot(identity+p)
     projector = np.power(2., -1.*len(paulis)) * projector
     eigenvalues, eigenvectors = np.linalg.eigh(projector)
     for i in range(len(eigenvalues)):
