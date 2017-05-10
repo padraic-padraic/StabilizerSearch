@@ -76,7 +76,7 @@ def pauli_from_string(_str):
     return tensor(*pauli_chain)
 
 def array_from_string(_str):
-    n_qubits = len(string)
+    n_qubits = len(_str)
     bits = np.array([False]*2*n_qubits)
     for n, literal in enumerate(_str):
         if literal == 'X':
@@ -173,7 +173,7 @@ def states_from_file(f, n_qubits):
             counter = 0
             while True:
                 line = f.readline()
-                line.strip()
+                line = line.strip()
                 if line=='ENDSTATE':
                     states.append(state)
                     break

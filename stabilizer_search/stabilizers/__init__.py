@@ -84,9 +84,10 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
         if stabilizer_states is None:
             groups = try_load('generators', GROUP_STRING, n_qubits, n_states)
             if groups is not None:
-                if get_all:
-                    save_to_file('generators',groups, GROUP_STRING, n_qubits)
                 stabilizer_states = eigenstate_func(groups, n_states)#, real_only)
+                if get_all:
+                    save_to_file('states', stabilizer_states, STATE_STRING,
+                                 n_qubits)
     if stabilizer_states is None:
         generators = generator_func(n_qubits, n_states)
         stabilizer_states = eigenstate_func(generators, n_states)#, real_only)

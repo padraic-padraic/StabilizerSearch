@@ -6,7 +6,6 @@ cimport numpy as np
 
 from .utils import array_to_pauli, get_sign_strings, n_stabilizer_states
 
-from libc.math cimport pow as fpow
 
 DTYPE=np.complex128
 ctypedef np.complex128_t DTYPE_t
@@ -21,7 +20,7 @@ cdef np.ndarray[DTYPE_t, ndim=1] get_eigenstate(list paulis):
     projector = np.identity(dim, dtype=np.complex128)
     for p in paulis:
         projector = projector * (identity+p)
-    projector = fpow(2, -1*len(paulis)) * projector
+    projector = np.power(2., -1.*len(paulis)) * projector
     eigenvalues, eigenvectors = np.linalg.eigh(projector)
     for i in range(len(eigenvalues)):
         if np.allclose(np.abs(eigenvalues[i]), 1.):
