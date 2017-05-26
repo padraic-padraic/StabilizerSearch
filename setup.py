@@ -52,11 +52,6 @@ EXTENSIONS = [
         include_dirs=[NUMPY_INC],
         ),
     Extension(
-        "stabilizer_search.linalg.cy_gram_schmidt",
-        ["stabilizer_search/linalg/cy_gram_schmidt.pyx"],
-        include_dirs=[NUMPY_INC]
-        ),
-    Extension(
         "stabilizer_search.search.cy_do_random_walk",
         ["stabilizer_search/search/cy_do_random_walk.pyx"],
         include_dirs=["./stabilizer_search/linalg/", NUMPY_INC],
