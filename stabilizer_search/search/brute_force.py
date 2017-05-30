@@ -1,6 +1,6 @@
 from ._search import _Search
 from ._result import _Result
-from ..linalg import ortho_projector
+from ..linalg import get_projector
 from ..mat import qeye
 from ..stabilizers import get_stabilizer_states
 from itertools import combinations
@@ -12,7 +12,6 @@ import numpy as np
 
 def ncr(n, r):
     return factorial(n)//factorial(r)//factorial(n-r)
-
 
 def do_brute_force(n_qubits, target_state, chi=None, **kwargs):
     """Function which performs the brute force search for stabilizer rank.
@@ -27,7 +26,7 @@ def do_brute_force(n_qubits, target_state, chi=None, **kwargs):
         for i in range(1, pow(2, n_qubits)):
             print('Test with {} states.'.format(i))
             for basis in combinations(stabilizers, i):
-                projector = ortho_projector([b for b in basis])
+                projector = get_projector([b for b in basis])
                 projection = np.linalg.norm(projector*target_state, 2)
                 if np.allclose(projection, 1):
                     return True, i, basis
@@ -37,7 +36,7 @@ def do_brute_force(n_qubits, target_state, chi=None, **kwargs):
         print('Searching brute force with chi={}'.format(chi))
         print('Got {} combinations to test'.format(ncr(len(stabilizers), chi)))
         for basis in combinations(stabilizers, chi):
-            projector = ortho_projector([b for b in basis])
+            projector = get_projector([b for b in basis])
             projection = np.linalg.norm(projector*target_state, 2)
             if np.allclose(projection, 1):
                 return True, chi, basis
