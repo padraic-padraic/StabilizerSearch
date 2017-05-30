@@ -35,11 +35,18 @@ def py_find_eigenstates(generating_sets, n_states):
     """ """
     n_qubits = len(generating_sets[0])
     generating_sets = [[array_to_pauli(g) for g in group] for group in generating_sets]
-    phase_strings = get_sign_strings(n_qubits, n_states)
-    if n_states==n_stabilizer_states(n_qubits):
-        generating_sets = add_sign_to_groups(generating_sets, phase_strings, True)
+    n_stabs = n_stabilizer_states(n_qubits)
+    positive_states = n_stabs//pow(2,n_qubits)
+    if n_states==n_stabilizer_states:
+        extend = True
+        phase_strings = get_sign_strings(n_qubits, n_states)
+    elif n_states > positive_states:
+        extend = True
+        phase_strings = get_sign_strings(n_qubits, n_states-positive_states)
     else:
-        generating_sets = add_sign_to_groups(generating_sets, phase_strings, False)
+        extend = False
+        phase_strings = get_sign_strings(n_qubits, n_states)
+    generating_sets = add_sign_to_groups(generating_sets, phase_strings, extend)
     states = [find_eigenstate(x) for x in map(find_projector, generating_sets)]
     # if real_only:
     #     return list(filter(lambda x: allclose(imag(x), 0.), states))
