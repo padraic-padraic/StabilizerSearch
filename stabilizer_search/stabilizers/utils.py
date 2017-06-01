@@ -4,7 +4,7 @@ stabilizer states."""
 
 import numpy as np
 
-from random import random, randint
+from random import choice, random, randint
 
 from ..mat import qeye, X, Y, Z, tensor
 
@@ -90,15 +90,15 @@ def array_from_string(_str):
 
 def get_sign_strings(n_qubits, n_states):
     sign_strings = []
-    if n_states != n_stabilizer_states(n_qubits):
-        for i in range(n_states):
-            if random() > (1 / pow(2, n_qubits)): # Add a phase! Randomly...
-                sign_num = bin(randint(1, pow(2, n_qubits)))[2:]
-                sign_num = '0'*(n_qubits - len(sign_num)) + sign_num
-                _a = np.array([b == '1' for b in sign_num])
-                sign_strings.append(_a)
-            else:
-                sign_strings.append(np.array([False]*n_qubits))
+
+    if n_states< n_stabilizer_states(n_qubits)//pow(2,n_qubits):
+            for i in range(n_states):
+                if random() > (1 / pow(2, n_qubits)): # Add a phase! Randomly...
+                    sign_num = bin(randint(1, pow(2, n_qubits)))[2:].zfill(n_qubits)
+                    _a = np.array([b == '1' for b in sign_num])
+                    sign_strings.append(_a)
+                else:
+                    sign_strings.append(np.array([False]*n_qubits))
     else:
         for i in range(1, pow(2, n_qubits)): #2^n -1 different phase strings exist
             sign_num = bin(i)[2:]
@@ -108,13 +108,21 @@ def get_sign_strings(n_qubits, n_states):
     return sign_strings
 
 
-def add_sign_to_groups(groups, sign_strings, extend):
-    if extend:
+def add_sign_to_groups(groups, n_qubits, n_states):
+    sign_strings = get_sign_strings(n_qubits, n_states)
+    n_stabs = n_stabilizer_states(len(groups[0]))
+    n_pos = n_stabs // pow(2,len(groups[0]))
+    if n_states==n_stabs:
         for i in range(len(groups)):
             for _bits in sign_strings:
                         groups.append([-1*p if b else p 
                                             for p, b in zip(groups[i], _bits)])
         print('Added sign to produce {} total groups'.format(len(groups)))
+    elif n_states > n_pos:
+        for i in range(n_states-n_pos):
+            p_string = choice(sign_strings)
+            g = choice(groups)
+            groups.append([-1*p if b else p for p, b in zip(g, p_string)])
     else:
         for i in range(len(groups)):
             groups[i] = [-1*p if b else p

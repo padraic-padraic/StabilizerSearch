@@ -6,7 +6,6 @@ from math import pi, sqrt
 from .haar_random import get_so2, get_su2
 from .py_haar_random import pyget_su2
 
-
 import numpy as np
 
 
@@ -52,3 +51,6 @@ def tensor(*args):
     while matrices:
         out = np.kron(out, matrices.pop(0))
     return out
+
+from .symmetric_subspace import ncr, symmetric_projector
+

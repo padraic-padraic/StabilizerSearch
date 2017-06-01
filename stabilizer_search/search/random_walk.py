@@ -5,7 +5,7 @@ from random import random, randint, randrange
 from ._search import _Search
 from ._result import _Result
 from .cy_do_random_walk import cy_do_random_walk
-from ..linalg import calculate_overlap, ortho_projector
+from ..linalg import get_projector
 from ..mat import qeye
 from ..stabilizers import get_stabilizer_states
 from ..stabilizers.utils import array_to_pauli
@@ -47,7 +47,7 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
     real = np.allclose(np.imag(target_state), 0.)
     stabilizers = get_stabilizer_states(n_qubits, chi, real_only=real)
     I = qeye(pow(2, n_qubits))
-    projector = ortho_projector([s for s in stabilizers])
+    projector = get_projector([s for s in stabilizers])
     overlap = np.linalg.norm(projector*target_state, 2)
     while beta <= beta_max:
         # print("Anneal Progress : {}%".format((beta-1)/beta_diff))
@@ -61,7 +61,7 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
                 if not np.allclose(new_state, 0.): #Accept the move only if the resulting state is not null!
                     break
             new_state = new_state / np.linalg.norm(new_state, 2)
-            new_projector = ortho_projector([s if n != move_target 
+            new_projector = get_projector([s if n != move_target 
                                             else new_state for n, s in 
                                             enumerate(stabilizers)])
             new_overlap = np.linalg.norm(new_projector*target_state, 2)
