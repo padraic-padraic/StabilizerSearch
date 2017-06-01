@@ -169,7 +169,7 @@ def states_from_file(f, n_qubits):
     while line:
         line = line.strip()
         if line=='STATE':
-            state =np.zeros((pow(2,n_qubits), 1), dtype=np.complex_)
+            state = np.matrix(np.zeros((pow(2,n_qubits), 1), dtype=np.complex_))
             counter = 0
             while True:
                 line = f.readline()

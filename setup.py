@@ -15,9 +15,10 @@ def pre_build_dependencies():
     os.chdir(os.path.join(build_root, 'stabilizer_search', 'clib', 'haar_random'))
     subprocess.call(["make", "clean"])
     subprocess.call(["make", "all"])
-    # os.chdir(os.path.join(build_root, 'stabilizer_search', 'clib', 'StabilizerCPP'))
-    # subprocess.call(["cmake", "-DBUILD_TESTING=OFF", "-DBUILD_EXECUTABLE=OFF", "./"])
-    # subprocess.call(["make"])
+    os.chdir(os.path.join(build_root, 'stabilizer_search', 'clib', 'StabilizerCPP'))
+    subprocess.call(["cmake", "-DBUILD_TESTING=OFF", "-DBUILD_EXECUTABLE=OFF", 
+                              "-DBUILD_PYTHON=ON", "./"])
+    subprocess.call(["make"])
     os.chdir(build_root)
 
 class PreBuildInstall(install):
@@ -61,24 +62,12 @@ EXTENSIONS = [
         ["stabilizer_search/search/cy_do_random_walk.pyx"],
         include_dirs=["./stabilizer_search/linalg/", NUMPY_INC],
         libraries=["m"]
-    )
-    # Extension(
-    #     "stabilizer_search.stabilizers.c_generators",
-    #     ["stabilizer_search/stabilizers/c_generators.pyx"],
-    #     include_dirs=["./stabilizer_search/clib",
-    #                   "./stabilizer_search/clib/StabilizerCPP/src",
-    #                   NUMPY_INC],
-    #     library_dirs=["./stabilizer_search/clib/StabilizerCPP/out/"],
-    #     libraries=["libsymplectic_stabilizer"],
-    #     extra_objects=["./stabilizer_search/clib/StabilizerCPP/out/libsymplectic_stabilizer.a"],
-    #     language="c++"
-    #     )
+    ),
 ]
-
 
 setup(
     name='stabilizer_search',
-    version='1.1.0',
+    version='2.0.0',
     url="https://github.com/padraic-padraic/StabilizerSearch",
     author="Padraic Calpin",
     description='Stabilizer Search',
