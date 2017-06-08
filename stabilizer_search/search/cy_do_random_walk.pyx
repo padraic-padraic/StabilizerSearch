@@ -18,13 +18,15 @@ DTYPE=np.complex128
 ctypedef np.complex128_t DTYPE_t
 
 cpdef get_projector(list states):
-    cdef unsigned int hilbert_dim, n_vecs, index
+    cdef unsigned int hilbert_dim, n_vecs, index1, index2
     n_vecs = len(states)
-    hilbert_dim = states[0].size()
+    hilbert_dim = states[0].size
     cdef np.ndarray[DTYPE_t, ndim=2] vec_matrix, out_q, out_r
     vec_matrix = np.zeros((hilbert_dim, n_vecs), dtype=np.complex128)
-    for index in range(n_vecs):
-        vec_matrix[:,index] = states[index]
+    print(states[0].shape)
+    for index1 in range(n_vecs):
+        for index2 in range(hilbert_dim):
+            vec_matrix[index2,index1] = states[index1][index2]
     out_q, out_r = np.linalg.qr(vec_matrix, mode='complete')
     return out_q
 
@@ -89,11 +91,13 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target_state,
     cdef np.ndarray[DTYPE_t, ndim=2] I = np.identity(pow(2, n_qubits), dtype=np.complex128)
     projector = get_projector(stabilizers)
     if is_state:
-        distance = 1- np.linalg.norm(projector*target_state, 2)
+        distance = 1 - np.linalg.norm(projector*target_state, 2)
     else:
         distance = np.linalg.norm(projector-target_state)
     while beta <= beta_max:
+        print('Beta step')
         for counter in range(walk_steps):
+            print('walk step')
             if np.allclose(distance, 0.):
                 return True, chi, stabilizers
             while True:
@@ -104,12 +108,14 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target_state,
                 new_state = new_state / new_norm
                 if not np.allclose(new_norm, 0.):
                     break
+            print('Got new state')
             new_projector = get_projector([s if n != move_target else new_state 
                                              for n, s in enumerate(stabilizers)])
             if is_state:
                 new_distance = 1-np.linalg.norm(new_projector*target_state, 2)
             else:
                 new_distance = np.linalg.norm(new_projector-target_state)
+            print(distance, new_distance)
             if new_distance < distance:
                 stabilizers[move_target] = deepcopy(new_state)
                 distance = new_distance

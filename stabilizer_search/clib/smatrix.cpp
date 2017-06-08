@@ -38,5 +38,4 @@ PYBIND11_MODULE(c_stabilizers, m) {
         .def(py::self == py::self)
         .def(py::self != py::self);
 
-    
 }

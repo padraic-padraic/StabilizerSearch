@@ -22,7 +22,7 @@ def test_real(n_qubits, bits):
     return _sum%2==0
 
 
-def random_pauli(n_qubits, real_only):
+def random_pauli(n_qubits, real_only=False):
     while True:
         base = bin(randint(1, pow(2, 2*n_qubits)))[2:]
         bits = '0'*(2*n_qubits - len(base)) + base
@@ -39,23 +39,30 @@ def random_pauli(n_qubits, real_only):
 
 def do_random_walk(n_qubits, target_state, chi, **kwargs):
     # print('Searching with chi={}'.format(chi))
+    if target_state.size > target_state.shape[0]:
+        is_state = False
+    else:
+        is_state = True
     beta = kwargs.pop('beta_init', 1)
     beta_max = kwargs.pop('beta_max', 4000)
     anneal_steps = kwargs.pop('steps', 100)
     beta_diff = (beta_max-beta)/anneal_steps
     walk_steps = kwargs.pop('M', 1000)
-    real = np.allclose(np.imag(target_state), 0.)
-    stabilizers = get_stabilizer_states(n_qubits, chi, real_only=real)
+    # real = np.allclose(np.imag(target_state), 0.)
+    stabilizers = get_stabilizer_states(n_qubits, chi)#, real_only=real)
     I = qeye(pow(2, n_qubits))
     projector = get_projector([s for s in stabilizers])
-    overlap = np.linalg.norm(projector*target_state, 2)
+    if is_state:
+        distance = 1-np.linalg.norm(projector*target_state, 2)
+    else:
+        distance = np.linalg.norm(projector - target_state)
     while beta <= beta_max:
         # print("Anneal Progress : {}%".format((beta-1)/beta_diff))
         for i in range(walk_steps):
-            if np.allclose(overlap, 1.):
+            if np.allclose(distance, 0.):
                 return True, chi, stabilizers
             while True:
-                move = random_pauli(n_qubits, real)
+                move = random_pauli(n_qubits)
                 move_target = randrange(chi)
                 new_state = (I+move) * stabilizers[move_target]
                 if not np.allclose(new_state, 0.): #Accept the move only if the resulting state is not null!
@@ -64,13 +71,16 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
             new_projector = get_projector([s if n != move_target 
                                             else new_state for n, s in 
                                             enumerate(stabilizers)])
-            new_overlap = np.linalg.norm(new_projector*target_state, 2)
+            if is_state:
+                new_distance = 1- np.linalg.norm(new_projector*target_state, 2)
+            else:
+                new_distance = np.linalg.norm(new_projector-target_state)
             # print('New Overlap is {}'.format(new_overlap))
-            if new_overlap > overlap:
+            if new_distance < distance:
                 overlap = new_overlap
                 stabilizers[move_target] = new_state
             else:
-                p_accept = exp(-beta*(overlap - new_overlap))
+                p_accept = exp(-beta*(new_distance - distance))
                 if random() < p_accept:
                     overlap = new_overlap
                     stabilizers[move_target] = new_state
@@ -102,7 +112,7 @@ class RandomWalkResult(_Result):
 
 class RandomWalkSearch(_Search):
     Result_Class = RandomWalkResult
-    func = staticmethod(do_random_walk)
+    func = staticmethod(cy_do_random_walk)
 
     def __init__(self, *args, **kwargs):
         _f = kwargs.pop('func', None)
