@@ -14,7 +14,8 @@ I = qeye(2)
 
 __all__ = ['n_stabilizer_states', 'array_to_pauli', 'array_to_string',
            'get_sign_strings','bool_to_int', 'add_sign_to_groups',
-           'states_from_file', 'states_to_file', 'gens_from_file', 'gens_to_file']
+           'states_from_file', 'states_to_file', 'gens_from_file', 
+           'gens_to_file', 'is_real']
 
 
 def bool_to_int(bits):
@@ -90,7 +91,6 @@ def array_from_string(_str):
 
 def get_sign_strings(n_qubits, n_states):
     sign_strings = []
-
     if n_states< n_stabilizer_states(n_qubits)//pow(2,n_qubits):
             for i in range(n_states):
                 if random() > (1 / pow(2, n_qubits)): # Add a phase! Randomly...
@@ -129,6 +129,25 @@ def add_sign_to_groups(groups, n_qubits, n_states):
                                    for p, b in zip(groups[i], sign_strings[i])]
     return groups
 
+
+def is_real(object):
+    if type(object)==list or type(object)==tuple:
+        for o in object:
+            if not is_real(o):
+                return False
+        return True
+    elif object.dtype==np.bool:
+        if object.size > object.shape[0]:
+            n_qubits = object.shape[0]
+            for i in range(object.shape[0]):
+                if not is_real(object[i]):
+                    return False
+            return True
+        else:
+            n_qubits = object.size //2
+            return np.sum(object[:n_qubits] & object[n_qubits:])%2 ==0
+    else:
+        return not (np.any(np.imag(object)))
 
 def group_to_file(gen_set, _f):
     _f.write('GROUP\n')

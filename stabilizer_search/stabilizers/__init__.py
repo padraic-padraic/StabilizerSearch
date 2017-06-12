@@ -10,7 +10,7 @@ from random import sample
 
 from .eigenstates import py_find_eigenstates
 from .py_generators import get_positive_stabilizer_groups as py_get_groups
-from .utils import n_stabilizer_states, states_from_file, states_to_file, gens_from_file, gens_to_file
+from .utils import n_stabilizer_states, states_from_file, states_to_file, gens_from_file, gens_to_file, is_real
 
 import os.path as path
 
@@ -26,7 +26,7 @@ LOAD_METHODS = {'states':states_from_file,
 WRITE_METHODS = {'states': states_to_file,
                  'generators': gens_to_file} 
 
-def try_load(_type, format_string, n_qubits, n_states=None):
+def try_load(_type, format_string, n_qubits, n_states, real_only=False):
     loader = LOAD_METHODS.get(_type, None)
     if loader is None:
         raise KeyError("Don't know how to load: "+_type)
@@ -41,8 +41,14 @@ def try_load(_type, format_string, n_qubits, n_states=None):
             items = loader(_f, n_qubits)
     else:
         items = None
-    if items is not None and n_states != n_stabilizer_states(n_qubits):
-        return sample(items, n_states)
+    if items is not None:
+        if _type=='states' and real_only:
+            items = [i for i in items if is_real(i)]
+            if n_states != n_stabilizer_states(n_qubits) and len(items) < n_states:
+                raise RuntimeError('There are insufficient real states on {} qubits'.format(n_qubits))
+        if n_states!= n_stabilizer_states(n_qubits):
+            if _type!='groups' or n_states < n_stabilizer_states(n_qubits)//pow(2,n_qubits):
+                return sample(items, n_states)
     return items
 
 
@@ -73,25 +79,29 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
     use_cached = kwargs.pop('use_cached', True)
     generator_func = kwargs.pop('generator_backend', py_get_groups)
     eigenstate_func = kwargs.pop('eigenstate_backend', py_find_eigenstates)
-    # real_only = kwargs.pop('real_only', False)
+    real_only = kwargs.pop('real_only', False)
     stabilizer_states = None
-    get_all = (n_states == n_stabilizer_states(n_qubits))
     if n_states is None:
         get_all = True
         n_states = n_stabilizer_states(n_qubits)
+    else:
+        get_all = (n_states==n_stabilizer_states(n_qubits))
     if use_cached:
-        stabilizer_states = try_load('states',STATE_STRING, n_qubits, n_states)
+        stabilizer_states = try_load('states',STATE_STRING, n_qubits, n_states,
+                                     real_only)
         if stabilizer_states is None:
-            groups = try_load('generators', GROUP_STRING, n_qubits, n_states)
+            groups = try_load('generators', GROUP_STRING, n_qubits, n_states,
+                              real_only)
             if groups is not None:
-                stabilizer_states = eigenstate_func(groups, n_states)#, real_only)
+                stabilizer_states = eigenstate_func(groups, n_states)
                 if get_all:
                     save_to_file('states', stabilizer_states, STATE_STRING,
                                  n_qubits)
     if stabilizer_states is None:
+        #TODO: Real only problem, we can simplify stuff in the >positive case by only building generators once
         generators = generator_func(n_qubits, n_states)
-        stabilizer_states = eigenstate_func(generators, n_states)#, real_only)
-        if use_cached and get_all:
+        stabilizer_states = eigenstate_func(generators, n_states)
+        if use_cached and get_all and not real_only:
             save_to_file('generators', generators, GROUP_STRING, n_qubits)
             save_to_file('states', stabilizer_states, STATE_STRING, n_qubits)
     return stabilizer_states

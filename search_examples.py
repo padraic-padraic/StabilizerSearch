@@ -19,8 +19,9 @@ RW = RandomWalkSearch(target_state, target_string, n_qubits, 2)
 # print(res)
 # print('\n --- \n')
 def test():
-    res = BF()
+    #res = BF()
     res = RW()
+    print(res.success)
 
 if __name__ == '__main__':
     print(timeit.timeit("test()", "from __main__ import test", number=20))

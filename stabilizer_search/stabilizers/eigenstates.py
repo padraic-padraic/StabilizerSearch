@@ -7,7 +7,7 @@ from numpy import allclose, imag, isclose, real
 from numpy.linalg import eig, norm
 
 from ..mat import qeye
-from .utils import get_sign_strings, add_sign_to_groups, n_stabilizer_states, array_to_pauli
+from .utils import get_sign_strings, add_sign_to_groups, n_stabilizer_states, array_to_pauli, is_real
 
 def find_projector(generating_set):
     n_qubits = len(generating_set)
@@ -31,13 +31,13 @@ def find_eigenstate(projector):
             return state
     return None
 
-def py_find_eigenstates(generating_sets, n_states):
+def py_find_eigenstates(generating_sets, n_states, real_only):
     """ """
     n_qubits = len(generating_sets[0])
     generating_sets = [[array_to_pauli(g) for g in group] 
                       for group in generating_sets]
     generating_sets = add_sign_to_groups(generating_sets, n_qubits, n_states)
     states = [find_eigenstate(x) for x in map(find_projector, generating_sets)]
-    # if real_only:
-    #     return list(filter(lambda x: allclose(imag(x), 0.), states))
+    if real_only:
+        return [s for s in states if is_real(s)]
     return states
