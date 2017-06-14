@@ -31,7 +31,7 @@ def find_eigenstate(projector):
             return state
     return None
 
-def py_find_eigenstates(generating_sets, n_states, real_only):
+def py_find_eigenstates(generating_sets, n_states, real_only=False):
     """ """
     n_qubits = len(generating_sets[0])
     generating_sets = [[array_to_pauli(g) for g in group] 

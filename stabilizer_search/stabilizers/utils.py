@@ -15,7 +15,7 @@ I = qeye(2)
 __all__ = ['n_stabilizer_states', 'array_to_pauli', 'array_to_string',
            'get_sign_strings','bool_to_int', 'add_sign_to_groups',
            'states_from_file', 'states_to_file', 'gens_from_file', 
-           'gens_to_file', 'is_real']
+           'gens_to_file', 'is_real', 'np_inc_in_list']
 
 
 def bool_to_int(bits):
@@ -148,6 +148,14 @@ def is_real(object):
             return np.sum(object[:n_qubits] & object[n_qubits:])%2 ==0
     else:
         return not (np.any(np.imag(object)))
+
+
+def np_inc_in_list(arr, _list):
+    for el in _list:
+        if np.array_equal(arr, el):
+            return True
+    return False
+
 
 def group_to_file(gen_set, _f):
     _f.write('GROUP\n')

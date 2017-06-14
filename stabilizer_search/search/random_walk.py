@@ -28,7 +28,7 @@ def random_pauli(n_qubits, real_only=False):
         bits = '0'*(2*n_qubits - len(base)) + base
         bits = np.array([b == '1' for b in bits])
         if real_only:
-            if test_real(bits):
+            if test_real(n_qubits, bits):
                 break
         else:
             break
@@ -48,8 +48,8 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
     anneal_steps = kwargs.pop('steps', 100)
     beta_diff = (beta_max-beta)/anneal_steps
     walk_steps = kwargs.pop('M', 1000)
-    # real = np.allclose(np.imag(target_state), 0.)
-    stabilizers = get_stabilizer_states(n_qubits, chi)#, real_only=real)
+    real = np.any(np.imag(target_state))
+    stabilizers = get_stabilizer_states(n_qubits, chi, real_only=real)
     I = qeye(pow(2, n_qubits))
     projector = get_projector([s for s in stabilizers])
     if is_state:
@@ -62,7 +62,7 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
             if np.allclose(distance, 0.):
                 return True, chi, stabilizers
             while True:
-                move = random_pauli(n_qubits)
+                move = random_pauli(n_qubits, real_only=True)
                 move_target = randrange(chi)
                 new_state = (I+move) * stabilizers[move_target]
                 if not np.allclose(new_state, 0.): #Accept the move only if the resulting state is not null!
@@ -77,12 +77,12 @@ def do_random_walk(n_qubits, target_state, chi, **kwargs):
                 new_distance = np.linalg.norm(new_projector-target_state)
             # print('New Overlap is {}'.format(new_overlap))
             if new_distance < distance:
-                overlap = new_overlap
+                distance = new_distance
                 stabilizers[move_target] = new_state
             else:
                 p_accept = exp(-beta*(new_distance - distance))
                 if random() < p_accept:
-                    overlap = new_overlap
+                    distance = new_distance
                     stabilizers[move_target] = new_state
         beta += beta_diff
     return False, chi, None

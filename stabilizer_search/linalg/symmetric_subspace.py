@@ -5,7 +5,7 @@ from math import sqrt
 import numpy as np
 import operator as op
 
-from . import tensor
+from ..mat import tensor
 
 ZERO = np.matrix([[1],[0]], dtype=np.complex_)
 ONE = np.matrix([[0],[1]], dtype=np.complex_)
@@ -30,5 +30,6 @@ def symmetric_projector(n_qubits):
         vec_placeholder /= np.linalg.norm(vec_placeholder, 2)
         vec_placeholder *= sqrt(ncr(n_qubits, i))
         vectors[:,i] = vec_placeholder
-    projector, r = np.linalg.qr(vectors, mode='complete')
+    q, r = np.linalg.qr(vectors)
+    projector = q*q.H
     return projector

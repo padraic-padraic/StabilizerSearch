@@ -161,10 +161,10 @@ def paulis_commute(n_qubits, paulis):
     return True
 
 def get_positive_stabilizer_groups(n_qubits, n_states, real_only=False):
-    if n_states == n_stabilizer_states(n_qubits): 
+    if n_states > n_stabilizer_states(n_qubits)/pow(2, n_qubits): 
         # If generating all states, we want to focus on only the all
         # positive signed operators
-        target = n_states/pow(2, n_qubits)
+        target = n_stabilizer_states(n_qubits)/pow(2, n_qubits)
     else:
         #If generating less than all, we'll add signs in randomly to compenstate
         target = n_states

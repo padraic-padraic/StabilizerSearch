@@ -10,7 +10,7 @@ from random import sample
 
 from .eigenstates import py_find_eigenstates
 from .py_generators import get_positive_stabilizer_groups as py_get_groups
-from .utils import n_stabilizer_states, states_from_file, states_to_file, gens_from_file, gens_to_file, is_real
+from .utils import *
 
 import os.path as path
 
@@ -98,9 +98,24 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
                     save_to_file('states', stabilizer_states, STATE_STRING,
                                  n_qubits)
     if stabilizer_states is None:
-        #TODO: Real only problem, we can simplify stuff in the >positive case by only building generators once
-        generators = generator_func(n_qubits, n_states)
-        stabilizer_states = eigenstate_func(generators, n_states)
+        #TODO: Filter real groups instead!
+        if real_only and not get_all:
+            stabilizer_states = []
+            while len(stabilizer_states) < n_states:
+                generators = generator_func(n_qubits, 
+                                            n_states-len(stabilizer_states))
+                states = eigenstate_func(generators, 
+                                            n_states-len(stabilizer_states),
+                                            real_only=True)
+                for _s in states:
+                    if not np_inc_in_list(_s, stabilizer_states):
+                        stabilizer_states.append(_s)
+                        if len(stabilizer_states)==n_states:
+                            break
+        else:
+            generators = generator_func(n_qubits, n_states)
+            stabilizer_states = eigenstate_func(generators, n_states, 
+                                                real_only=True)
         if use_cached and get_all and not real_only:
             save_to_file('generators', generators, GROUP_STRING, n_qubits)
             save_to_file('states', stabilizer_states, STATE_STRING, n_qubits)

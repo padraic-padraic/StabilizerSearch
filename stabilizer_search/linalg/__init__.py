@@ -1,4 +1,5 @@
 from .gram_schmidt import ortho_projector as gs_projector
+from .symmetric_subspace import symmetric_projector
 
 import numpy as np
 
@@ -14,5 +15,6 @@ def get_projector(vectors):
     vec_mat = np.matrix(np.zeros((dim, len(vectors)), dtype=np.complex_))
     for i in range(len(vectors)):
         vec_mat[:,i] = vectors[i]
-    projector, r = np.linalg.qr(vec_mat, mode='complete')
+    q, r = np.linalg.qr(vec_mat)
+    projector = q*q.H
     return projector

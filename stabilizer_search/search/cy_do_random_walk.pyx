@@ -6,7 +6,9 @@ cimport numpy as np
 
 from libc.math cimport exp
 from copy import deepcopy
+from random import random, randrange
 
+# from ..linalg import get_projector
 from ..mat import X, Y, Z
 from ..stabilizers import get_stabilizer_states
 from ..stabilizers.utils import array_to_pauli
@@ -20,32 +22,47 @@ cpdef get_projector(list states):
     cdef unsigned int hilbert_dim, n_vecs, index1, index2
     n_vecs = len(states)
     hilbert_dim = states[0].size
-    cdef np.ndarray[DTYPE_t, ndim=2] vec_matrix, out_q, out_r
+    cdef np.ndarray[DTYPE_t, ndim=2] vec_matrix, out_q, out_r, projector
     vec_matrix = np.zeros((hilbert_dim, n_vecs), dtype=np.complex128)
     for index1 in range(n_vecs):
         for index2 in range(hilbert_dim):
             vec_matrix[index2,index1] = states[index1][index2]
     out_q, out_r = np.linalg.qr(vec_matrix, mode='complete')
-    return out_q
+    projector = out_q * np.conj(np.transpose(out_q))
+    return projector
 
 
-cdef random_pauli(int n_qubits):
-    cdef unsigned int index
+cdef random_pauli(int n_qubits, bint real_only):
+    cdef unsigned int index, y_count
     cdef np.ndarray[np.uint8_t, ndim=1] bits
-    bits = np.zeros(2*n_qubits, dtype=np.uint8)
-    bitstring = bin(np.random.randint(1, pow(2, 2*n_qubits)))[2:].zfill(2*n_qubits)
-    for index in range(2*n_qubits):
-        if bitstring[index]=='0':
-            bits[index] = 0
+    cdef np.ndarray[DTYPE_t, ndim=2] pauli
+    while True:
+        bitstring = bin(randrange(1, pow(2,2*n_qubits)))[2:].zfill(2*n_qubits)
+        bits = np.zeros(2*n_qubits, dtype=np.uint8)
+        for index in range(2*n_qubits):
+            if bitstring[index]=='0':
+                bits[index] = 0
+            else:
+                bits[index] = 1
+        if real_only:
+            y_count = 0
+            for index in range(2*n_qubits):
+                if bits[index]==1 and bits[index+n_qubits]==1:
+                    y_count += 1
+            if y_count%2==0:
+                break
         else:
-            bits[index] = 1
-    return array_to_pauli(bits.view(dtype=np.bool))
+            break
+    pauli = array_to_pauli(bits.view(dtype=np.bool))
+    if random() > 0.5:
+        return -1* pauli
+    return pauli
 
 
-cdef trace_distance(np.ndarray[DTYPE_t, ndim=2] a, 
+cdef double trace_distance(np.ndarray[DTYPE_t, ndim=2] a, 
                            np.ndarray[DTYPE_t, ndim=2] b):
     cdef np.ndarray[np.float64_t, ndim=1] eigvals
-    eigvals = np.absolute(np.linalg.eigvals(a-b))
+    eigvals = np.absolute(np.linalg.eigvalsh(a-b))
     return 0.5*np.sum(eigvals)
 
 
@@ -63,15 +80,15 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
     else:
         distance = trace_distance(projector, target)
     while beta <= beta_max:
-        print("Anneal Progress : {}%".format((beta-1)/beta_diff))
         for counter in range(walk_steps):
             if np.allclose(distance, 0.):
                 return True, chi, stabilizers
             while True:
-                move = random_pauli(n_qubits)
-                if np.any(np.imag(move)):
-                    continue
-                move_target = np.random.randint(chi)
+                move = random_pauli(n_qubits, real_only)
+                if real_only:
+                    if np.any(np.imag(move)):
+                        continue
+                move_target = randrange(chi)
                 new_state = (I+move)*stabilizers[move_target]
                 new_norm = np.linalg.norm(new_state, 2)
                 new_state = new_state / new_norm
@@ -107,7 +124,7 @@ def cy_do_random_walk(n_qubits, target, chi, **kwargs):
     anneal_steps = kwargs.pop('steps', 100)
     beta_diff = (beta_max-beta)/anneal_steps
     walk_steps = kwargs.pop('M', 1000)
-    real_only = kwargs.pop('real_only', False)
+    real_only = not(np.any(np.imag(target)))
     res = random_walk(n_qubits, target, chi, beta, beta_max, beta_diff, 
                       walk_steps, is_state, real_only)
     return res

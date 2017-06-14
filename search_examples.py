@@ -1,5 +1,6 @@
 from math import sqrt
 from stabilizer_search import BruteForceSearch, RandomWalkSearch
+from stabilizer_search.search.random_walk import do_random_walk
 from stabilizer_search.mat import X, T
 from stabilizer_search.mat.haar_random import get_su2
 
@@ -21,7 +22,8 @@ RW = RandomWalkSearch(target_state, target_string, n_qubits, 2)
 def test():
     #res = BF()
     res = RW()
-    print(res.success)
+    # print(res)
+
 
 if __name__ == '__main__':
     print(timeit.timeit("test()", "from __main__ import test", number=20))

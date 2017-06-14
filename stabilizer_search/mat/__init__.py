@@ -52,5 +52,3 @@ def tensor(*args):
         out = np.kron(out, matrices.pop(0))
     return out
 
-from .symmetric_subspace import ncr, symmetric_projector
-
