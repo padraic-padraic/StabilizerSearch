@@ -1,7 +1,7 @@
 from functools import reduce
 from itertools import permutations
 from math import sqrt
-
+#TODO: Check the symmetric subspace code and projector building code, check the stabilizers returned by cy_do_random...
 import numpy as np
 import operator as op
 

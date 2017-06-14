@@ -80,6 +80,7 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
     else:
         distance = trace_distance(projector, target)
     while beta <= beta_max:
+        print("Anneal Progress : {}%".format((beta-1)/beta_diff))
         for counter in range(walk_steps):
             if np.allclose(distance, 0.):
                 return True, chi, stabilizers
