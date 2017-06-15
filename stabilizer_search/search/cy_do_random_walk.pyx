@@ -27,8 +27,8 @@ cpdef get_projector(list states):
     for index1 in range(n_vecs):
         for index2 in range(hilbert_dim):
             vec_matrix[index2,index1] = states[index1][index2]
-    out_q, out_r = np.linalg.qr(vec_matrix, mode='complete')
-    projector = out_q * np.conj(np.transpose(out_q))
+    out_q, out_r = np.linalg.qr(vec_matrix)
+    projector = np.dot(out_q, np.conj(np.transpose(out_q)))
     return projector
 
 
