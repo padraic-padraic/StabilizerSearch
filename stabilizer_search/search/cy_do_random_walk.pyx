@@ -5,7 +5,6 @@ import numpy as np
 cimport numpy as np
 
 from libc.math cimport exp
-from copy import deepcopy
 from random import random, randrange
 
 # from ..linalg import get_projector
@@ -20,13 +19,15 @@ ctypedef np.complex128_t DTYPE_t
 
 cpdef get_projector(list states):
     cdef unsigned int hilbert_dim, n_vecs, index1, index2
+    cdef DTYPE_t value
     n_vecs = len(states)
     hilbert_dim = states[0].size
     cdef np.ndarray[DTYPE_t, ndim=2] vec_matrix, out_q, out_r, projector
-    vec_matrix = np.zeros((hilbert_dim, n_vecs), dtype=np.complex128)
+    vec_matrix = np.zeros((hilbert_dim, n_vecs), dtype=DTYPE)
     for index1 in range(n_vecs):
         for index2 in range(hilbert_dim):
-            vec_matrix[index2,index1] = states[index1][index2]
+            value = np.asscalar(states[index1][index2])
+            vec_matrix[index2,index1] = value
     out_q, out_r = np.linalg.qr(vec_matrix)
     projector = np.dot(out_q, np.conj(np.transpose(out_q)))
     return projector
