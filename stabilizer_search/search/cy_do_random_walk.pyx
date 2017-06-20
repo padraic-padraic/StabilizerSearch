@@ -59,6 +59,13 @@ cdef random_pauli(int n_qubits, bint real_only):
     return pauli
 
 
+cdef bint np_inc_in_list(np.ndarray[DTYPE_t, ndim=2] _arr, list _arrs):
+    cdef int index
+    for index in range(len(_arrs)):
+        if np.array_equal(_arr, _arrs[index]):
+            return True
+    return False
+
 cdef double trace_distance(np.ndarray[DTYPE_t, ndim=2] a, 
                            np.ndarray[DTYPE_t, ndim=2] b):
     cdef np.ndarray[np.float64_t, ndim=1] eigvals
@@ -72,7 +79,7 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
     cdef list stabilizers = get_stabilizer_states(n_qubits, chi, real_only=True)
     cdef np.ndarray[DTYPE_t, ndim=2] projector, new_projector, new_state
     cdef double distance, new_distance, new_norm, p_accept
-    cdef int counter
+    cdef int dim = stabilizers[0].size, counter, vec_index
     cdef np.ndarray[DTYPE_t, ndim=2] I = np.identity(pow(2, n_qubits), dtype=np.complex128)
     projector = get_projector(stabilizers)
     if is_state:
@@ -93,6 +100,8 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
                 new_state = (I+move)*stabilizers[move_target]
                 new_norm = np.linalg.norm(new_state, 2)
                 new_state = new_state / new_norm
+                if np_inc_in_list(new_state, stabilizers):
+                    continue
                 if not np.allclose(new_norm, 0.):
                     break
             new_projector = get_projector([s if n != move_target else new_state 
@@ -101,14 +110,15 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
                 new_distance = 1-np.linalg.norm(new_projector*target, 2)
             else:
                 new_distance = np.linalg.norm(new_projector-target)
-            # print(distance, new_distance)
             if new_distance < distance:
-                stabilizers[move_target] = deepcopy(new_state)
+                for vec_index in range(dim):
+                    stabilizers[move_target][vec_index] = new_state[vec_index]
                 distance = new_distance
             else:
                 p_accept = exp(-1*beta*(new_distance-distance))
                 if np.random.random() < p_accept:
-                    stabilizers[move_target] = deepcopy(new_state)
+                    for vec_index in range(dim):
+                        stabilizers[move_target][vec_index] = new_state[vec_index]
                     distance = new_distance
         beta += beta_diff
     print('Final distance was {}'.format(distance))
