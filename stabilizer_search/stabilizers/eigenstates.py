@@ -38,6 +38,6 @@ def py_find_eigenstates(generating_sets, n_states, real_only=False):
                       for group in generating_sets]
     generating_sets = add_sign_to_groups(generating_sets, n_qubits, n_states)
     states = [find_eigenstate(x) for x in map(find_projector, generating_sets)]
-    if real_only:
-        return [s for s in states if is_real(s)]
+    # if real_only:
+    #     return [s for s in states if is_real(s)]
     return states

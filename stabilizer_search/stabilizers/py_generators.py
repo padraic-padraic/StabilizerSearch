@@ -177,6 +177,9 @@ def get_positive_stabilizer_groups(n_qubits, n_states, real_only=False):
             continue
         if np.linalg.matrix_rank(np.matrix(group)) < n_qubits:
             continue
+        if real_only:
+            if not is_real(group):  
+                continue
         candidate = BinarySubspace(*group)
         if len(candidate.generators) < n_qubits:
             continue

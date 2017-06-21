@@ -91,14 +91,14 @@ def array_from_string(_str):
 
 def get_sign_strings(n_qubits, n_states):
     sign_strings = []
-    if n_states< n_stabilizer_states(n_qubits)//pow(2,n_qubits):
-            for i in range(n_states):
-                if random() > (1 / pow(2, n_qubits)): # Add a phase! Randomly...
-                    sign_num = bin(randint(1, pow(2, n_qubits)))[2:].zfill(n_qubits)
-                    _a = np.array([b == '1' for b in sign_num])
-                    sign_strings.append(_a)
-                else:
-                    sign_strings.append(np.array([False]*n_qubits))
+    if n_states<= n_stabilizer_states(n_qubits)//pow(2,n_qubits):
+        for i in range(n_states):
+            if random() > (1 / pow(2, n_qubits)): # Add a phase! Randomly...
+                sign_num = bin(randint(1, pow(2, n_qubits)))[2:].zfill(n_qubits)
+                _a = np.array([b == '1' for b in sign_num])
+                sign_strings.append(_a)
+            else:
+                sign_strings.append(np.array([False]*n_qubits))
     else:
         for i in range(1, pow(2, n_qubits)): #2^n -1 different phase strings exist
             sign_num = bin(i)[2:]
@@ -130,24 +130,24 @@ def add_sign_to_groups(groups, n_qubits, n_states):
     return groups
 
 
-def is_real(object):
-    if type(object)==list or type(object)==tuple:
-        for o in object:
+def is_real(obj):
+    if type(obj)==list or type(obj)==tuple:
+        for o in obj:
             if not is_real(o):
                 return False
         return True
-    elif object.dtype==np.bool:
-        if object.size > object.shape[0]:
-            n_qubits = object.shape[0]
-            for i in range(object.shape[0]):
-                if not is_real(object[i]):
+    elif obj.dtype==np.bool:
+        if obj.size > obj.shape[0]:
+            n_qubits = obj.shape[0]
+            for i in range(obj.shape[0]):
+                if not is_real(obj[i]):
                     return False
             return True
         else:
-            n_qubits = object.size //2
-            return np.sum(object[:n_qubits] & object[n_qubits:])%2 ==0
+            n_qubits = obj.size //2
+            return np.sum(obj[:n_qubits] & obj[n_qubits:])%2 ==0
     else:
-        return not (np.any(np.imag(object)))
+        return not (np.any(np.imag(obj)))
 
 
 def np_inc_in_list(arr, _list):
