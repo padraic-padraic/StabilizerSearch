@@ -77,11 +77,13 @@ cdef double trace_distance(np.ndarray[DTYPE_t, ndim=2] a,
 cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
                  int chi, double beta, int beta_max, double beta_diff,
                  int walk_steps, bint is_state, bint real_only):
+    print("Get stabilizers")
     cdef list stabilizers = get_stabilizer_states(n_qubits, chi, real_only=True)
     cdef np.ndarray[DTYPE_t, ndim=2] projector, new_projector, new_state
     cdef double distance, new_distance, new_norm, p_accept
     cdef int dim = stabilizers[0].size, counter, vec_index
     cdef np.ndarray[DTYPE_t, ndim=2] I = np.identity(pow(2, n_qubits), dtype=np.complex128)
+    print("Build projector")
     projector = get_projector(stabilizers)
     if is_state:
         distance = 1 - np.linalg.norm(projector*target, 2)

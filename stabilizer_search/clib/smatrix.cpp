@@ -12,8 +12,8 @@ PYBIND11_MODULE(c_stabilizers, m) {
     py::class_<SymplecticPauli>(m, "SymplecticPauli")
         .def(py::init<const unsigned int nQubits, const unsigned int Num>())
         .def_readonly("n_qubits", &SymplecticPauli::NQubits)
-        .def_property("xNum", &SymplecticPauli::X, &SymplecticPauli::setX)
-        .def_property("zNum", &SymplecticPauli::Z, &SymplecticPauli::setZ)
+        .def_property("xNum", &SymplecticPauli::XNum, &SymplecticPauli::setX)
+        .def_property("zNum", &SymplecticPauli::ZNum, &SymplecticPauli::setZ)
         .def("commutes", &SymplecticPauli::commutes)
         .def("__str__", &SymplecticPauli::toString)
         .def("to_matrix", &SymplecticPauli::toMatrix)
@@ -37,5 +37,8 @@ PYBIND11_MODULE(c_stabilizers, m) {
         .def("__str__", &StabilizerMatrix::toString)
         .def(py::self == py::self)
         .def(py::self != py::self);
+
+    m.def("c_get_stabilizer_groups", &getStabilizerGroups,
+          py::arg("n_qubits"), py::arg("n_states"), py::arg("real_only"));
 
 }
