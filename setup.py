@@ -133,23 +133,36 @@ EXTENSIONS = [
 
 class PreBuildInstall(install):
 
-    def pybindize(self):
-        ct = self.compiler.compiler_type
-        opts = self.c_opts.get(ct, [])
-        if ct == 'unix':
-            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
-            opts.append(cpp_flag(self.compiler))
-            if has_flag(self.compiler, '-fvisibility=hidden'):
-                opts.append('-fvisibility=hidden')
-        elif ct == 'msvc':
-            opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
-        for ext in pb_extensions:
-            ext.extra_compile_args = opts
-        return pb_extensions
+    c_opts = {
+        'msvc': ['/EHsc'],
+        'unix': [],
+    }
+
+    def pybindize(self, copts, extension):
+        if self.ct == 'unix':
+            copts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
+            copts.append('-std=c++11')
+            # copts.append(cpp_flag(self.compiler))
+            # if has_flag(self.compiler, '-fvisibility=hidden'):
+            #     copts.append('-fvisibility=hidden')
+        elif self.ct == 'msvc':
+            copts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
+        ext.extra_compile_args = copts
+        return ext
 
     def run(self):
         pre_build_dependencies()
-        self.pybindize(PYBIND_EXTENSIONS)
+        # ct = self.compiler.compiler_type
+        for ext in self.extensions:
+            if ext.ext_type == 'cython':
+                ext = cythonize(ext, include_path=["./stabilizer_search/mat/", 
+                          "./stabilizer_search/linalg/"])[0]
+            elif ext.ext_type == 'pybind':
+                self.ct='unix' #dumb hack
+                opts = self.c_opts.get(self.ct, [])
+                self.pybindize(opts, ext)
+            else:
+                continue
         install.run(self)
 
 
@@ -160,22 +173,17 @@ class PreBuildExt(build_ext):
         'unix': [],
     }
 
-    # if sys.platform == 'darwin':
-    #     c_opts['unix'] += ['-stdlib=libc++', '-mmacosx-version-min=10.7']
-
-    def pybindize(self, pb_extensions):
-        ct = build_ext.compiler.compiler_type
-        opts = self.c_opts.get(ct, [])
-        if ct == 'unix':
-            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
-            opts.append(cpp_flag(self.compiler))
-            if has_flag(self.compiler, '-fvisibility=hidden'):
-                opts.append('-fvisibility=hidden')
-        elif ct == 'msvc':
-            opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
-        for ext in pb_extensions:
-            ext.extra_compile_args = opts
-        self.extensions += pb_extensions
+    def pybindize(self, copts, ext):
+        if self.ct == 'unix':
+            copts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
+            copts.append('-std=c++11')
+            # copts.append(cpp_flag(self.compiler))
+            # if has_flag(self.compiler, '-fvisibility=hidden'):
+            #     copts.append('-fvisibility=hidden')
+        elif self.ct == 'msvc':
+            copts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
+        ext.extra_compile_args = copts
+        return ext
 
     def run(self):
         pre_build_dependencies()
@@ -185,17 +193,9 @@ class PreBuildExt(build_ext):
                 ext = cythonize(ext, include_path=["./stabilizer_search/mat/", 
                           "./stabilizer_search/linalg/"])[0]
             elif ext.ext_type == 'pybind':
-                ct='unix'
-                opts = self.c_opts.get(ct, [])
-                if ct == 'unix':
-                    opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
-                    opts.append('-std=c++11')
-                    # opts.append(cpp_flag(self.compiler))
-                    # if has_flag(self.compiler, '-fvisibility=hidden'):
-                    #     opts.append('-fvisibility=hidden')
-                elif ct == 'msvc':
-                    opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
-                ext.extra_compile_args = opts
+                self.ct='unix' #dumb hack
+                opts = self.c_opts.get(self.ct, [])
+                ext = self.pybindize(opts, ext)
             else:
                 continue
         build_ext.run(self)
