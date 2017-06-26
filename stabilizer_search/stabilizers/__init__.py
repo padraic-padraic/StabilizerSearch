@@ -11,12 +11,76 @@ from random import sample
 from ..clib.c_stabilizers import c_get_stabilizer_groups, c_get_eigenstates
 from .eigenstates import py_find_eigenstates
 from .py_generators import get_positive_stabilizer_groups as py_get_groups
+from .py_generators import PauliArray
 from .utils import *
 
 import os.path as path
 
 
 __all__ = ['get_stabilizer_states']
+
+
+def group_to_file(gen_set, _f):
+    _f.write('GROUP\n')
+    for pauli in gen_set:
+        _f.write('{}\n'.format(array_to_string(pauli)))
+    _f.write('ENDGROUP\n\n')
+
+
+def gens_to_file(generators, _f):
+    n_qubits = len(generators[0])
+    n_positive_groups = n_stabilizer_states(n_qubits) // pow(2,n_qubits)
+    for i in range(n_positive_groups):
+        group_to_file(generators[i], _f)
+
+
+def states_to_file(states, _f):
+    for state in states:
+        _f.write('STATE\n')
+        for _el in state:
+            _f.write('({}, {})\n'.format(np.asscalar(np.real(_el)), 
+                                       np.asscalar(np.imag(_el))))
+        _f.write('ENDSTATE\n\n')
+
+
+def gens_from_file(f, n_qubits):
+    positive_generators=[]
+    line = f.readline()
+    while line:
+        line = line.strip()
+        if line=='GROUP':
+            group = []
+            while True:
+                line = f.readline()
+                line = line.strip()
+                if line=='ENDGROUP':
+                    positive_generators.append(group)
+                    break
+                group.append(PauliArray.from_string(line))
+        line = f.readline()
+    return positive_generators
+
+
+def states_from_file(f, n_qubits):
+    states = []
+    line = f.readline()
+    while line:
+        line = line.strip()
+        if line=='STATE':
+            state = np.matrix(np.zeros((pow(2,n_qubits), 1), dtype=np.complex_))
+            counter = 0
+            while True:
+                line = f.readline()
+                line = line.strip()
+                if line=='ENDSTATE':
+                    states.append(state)
+                    break
+                line = line.strip('()').split(',')
+                line = [l.strip() for l in line]
+                state[counter] = float(line[0])+1j*float(line[1])
+                counter +=1
+        line = f.readline()
+    return states
 
 
 APP_DIR = path.abspath(__file__)

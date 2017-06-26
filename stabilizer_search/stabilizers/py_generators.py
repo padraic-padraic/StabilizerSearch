@@ -20,23 +20,79 @@ def xor(a,b):
       return (a|b)&~(a&b)
 
 
+def symplectic_inner_product(n, a, b):
+    x_a, z_a = a[:n], a[n:]
+    x_b, z_b = b[:n], b[n:]
+    # count = (x_a&z_b).count() + (x_b&z_a).count()
+    count = np.sum((x_a&z_b)) + np.sum((x_b&z_a))
+    return count%2
+
+
+class PauliArray(object):
+
+    def __init__(self, n_qubits, number=0):
+        self.n_qubits = n_qubits
+        bin_string = bin(number)[2:] #strip the 0b from the string
+        bin_string = '0'*(2*n_qubits - len(bin_string)) + bin_string
+        self.bits = np.array([b == '1' for b in bin_string])
+
+    @classmethod
+    def from_arr(cls, array):
+        n_qubits = array.size //2
+        out = cls(n_qubits)
+        out.bits = array
+
+    @classmethod
+    def from_string(cls, _str):
+        pauli = cls(n_qubits)
+        pauli.bits = array_from_string(_str)
+        return pauli
+        
+    def __mul__(self, other):
+        if self.n_qubits != other.n_qubits:
+            raise ValueError("Paulis act on different numbers of qubits.")
+        out = PauliArray(self.n_qubits)
+        out.bits == xor(self.bits, other.bits)
+
+    def __imul__(self, other):
+        return self.__mul__(other)
+
+    def __eq__(self, other):
+        if self.n_qubits != other.n_qubits:
+            raise ValueError("Paulis act on different numbers of qubits.")
+        return np.array_equal(self.bits, out.bits)
+
+    def __repr__(self):
+        return '<Pauli Array on {} qubits: {}'.format(self.n_qubits, 
+                                                      array_to_string(self.bits))
+
+    def __str__(self):
+        return array_to_string('self.bits')
+
+    def commute(self, other):
+        if self.n_qubits != other.n_qubits:
+            raise ValueError("Paulis act on different numbers of qubits.")
+        return symplectic_inner_product(self.n_qubits, self.bits, other.bits)==0
+
+    def is_real(self):
+        return np.sum(self.bits[:self.n_qubits] & 
+                      self.bits[self.n_qubits:])%2 ==0
+
 class BinarySubspace(object):
-    """Set-like class for bitarray objects to generate a closed subspace."""
+    """Set-like class for PauliArray objects to generate a closed subspace."""
     def __init__(self, *data):
         self.order = 0
         self._items = []
         self.generators = []
         for val in data:
-            # if not isinstance(val, bitarray):
-            if not isinstance(val, np.ndarray):
-                raise ValueError('This class works for numpy arrays only!')
-                # raise ValueError('This class works for bitarrays only!')
+            if not isinstance(val, PauliArray):
+                raise ValueError('This class works for PauliArrays only!')
             self.add(val)
     
     def __contains__(self, it):
         for _el in self._items:
-            # if all(xnor(_el, it)):
-            if np.array_equal(_el, it):
+            if _el == it:
+            # if np.array_equal(_el, it):
                 return True
         return False
 
@@ -46,8 +102,8 @@ class BinarySubspace(object):
 
     def _generate(self, obj):
         for item in self._items:
-            # new = item^obj
-            new = xor(item, obj)
+            new = item*obj
+            # new = xor(item, obj)
             if new in self:
                 continue
             else:
@@ -70,76 +126,6 @@ class BinarySubspace(object):
         return self
 
 
-class StabilizerMatrix(object):
-
-    def __init__(self, generators):
-        self.n_qubits = len(generators)
-        self.sMatrix = np.zeros((self.n_qubits, 2*self.n_qubits), dtype=np.bool)
-        for n, g in enumerate(generators):
-            self.sMatrix[n] = g
-        try:
-            self.__to_canonical_form()
-        except:
-            for g in generators:
-                print(array_to_string(g))
-
-    def isZ(self, row, qubit):
-        if self.sMatrix[row, qubit]:
-            return False
-        if self.sMatrix[row, qubit+self.n_qubits]:
-            return True
-        return False
-
-    def isZY(self, row, qubit):
-        if self.sMatrix[row, qubit+self.n_qubits]:
-            return True
-        return False
-
-    def isXY(self, row, qubit):
-        if self.sMatrix[row, qubit]:
-            return True
-        return False
-
-    def rowMult(self, row1, row2):
-        self.sMatrix[row1] = np.logical_xor(self.sMatrix[row1], 
-                                            self.sMatrix[row2])
-
-    @property
-    def linearly_independent(self):
-        return np.linalg.matrix_rank(self.sMatrix) == self.n_qubits
-
-    def __to_canonical_form(self):
-        i = 0
-        for j in range(self.n_qubits):
-            for k in range(self.n_qubits):
-                if self.isXY(k, j):
-                    self.sMatrix[[i,k]] = self.sMatrix[[k,i]]
-                    for m in range(self.n_qubits):
-                        if m!= i and self.isXY(m, j):
-                            self.rowMult(m,i)
-                    i+=1
-                    break
-        for j in range(self.n_qubits):
-            for k in range(self.n_qubits):
-                if self.isZ(k,j):
-                    self.sMatrix[[i,k]] = self.sMatrix[[k,i]]
-                    for m in range(self.n_qubits):
-                        if m!= i and self.isZY(m, j):
-                            self.rowMult(m, i)
-                    i+=1
-                    break
-
-    def __eq__(self, other):
-        return np.array_equal(self.sMatrix, other.sMatrix)
-
-def symplectic_inner_product(n, a, b):
-    x_a, z_a = a[:n], a[n:]
-    x_b, z_b = b[:n], b[n:]
-    # count = (x_a&z_b).count() + (x_b&z_a).count()
-    count = np.sum((x_a&z_b)) + np.sum((x_b&z_a))
-    return count%2
-
-
 def test_commutivity(n, bits1, bits2):
     return symplectic_inner_product(n, bits1, bits2) == 0 #1 if they anticommute, 0 if they commute
 
@@ -156,7 +142,8 @@ def gen_bitstrings(n):
 
 def paulis_commute(n_qubits, paulis):
     for p1, p2 in combinations(paulis, 2):
-        if not test_commutivity(n_qubits, p1, p2):
+        if not p1.commute(p2):
+        # if not test_commutivity(n_qubits, p1, p2):
             return False
     return True
 
@@ -168,14 +155,16 @@ def get_positive_stabilizer_groups(n_qubits, n_states, real_only=False):
     else:
         #If generating less than all, we'll add signs in randomly to compenstate
         target = n_states
-    bitstrings = gen_bitstrings(n_qubits)
-    shuffle(bitstrings)
+    # bitstrings = gen_bitstrings(n_qubits)
+    paulis = [PauliArray(n_qubits, i) for i in range(1, pow(2,2*n))]
+    # shuffle(bitstrings)
+    shuffle(paulis)
     subspaces = []
     generators = []
     for group in combinations(bitstrings, n_qubits):
         if not paulis_commute(n_qubits, group):
             continue
-        if np.linalg.matrix_rank(np.matrix(group)) < n_qubits:
+        if np.linalg.matrix_rank(np.matrix([g.bits for g in group])) < n_qubits:
             continue
         if real_only:
             if not is_real(group):  
@@ -185,11 +174,8 @@ def get_positive_stabilizer_groups(n_qubits, n_states, real_only=False):
             continue
         if len(candidate._items) < pow(2,n_qubits):
             continue
-        # candidate = StabilizerMatrix(group)
-        # if not candidate.linearly_independent:
-        #     continue
         res = tuple(i for i in sorted(candidate._items, key=bool_to_int))
-        if np.any([np.all([np.allclose(_el1, _el2) for _el1, _el2 in zip(res, space)]) 
+        if np.any([np.all([_el1==_el24 for _el1, _el2 in zip(res, space)]) 
                    for space in subspaces]):
             continue
         subspaces.append(res)

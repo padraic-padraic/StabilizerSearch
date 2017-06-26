@@ -73,7 +73,7 @@ def pre_build_dependencies():
     subprocess.call(["make", "clean"])
     subprocess.call(["make", "all"])
     os.chdir(os.path.join(build_root, 'stabilizer_search', 'clib', 'StabilizerCPP'))
-    subprocess.call(["cmake", "-DBUILD_SHARED_LIBS=OFF", "-DBUILD_TESTING=OFF", 
+    subprocess.call(["cmake", "-DBUILD_SHARED_LIBS=ON", "-DBUILD_TESTING=OFF", 
                     "-DBUILD_EXECUTABLE=OFF", "-DBUILD_PYTHON=ON", "./"])
     subprocess.call(["make"])
     os.chdir(build_root)
@@ -122,7 +122,7 @@ EXTENSIONS = [
         runtime_library_dirs=['stabilizer_search/clib/StabilizerCPP/out/',
                               'stabilizer_search/clib/eigen/',
                               'stabilizer_search/clib/dynamic_bitset/include/'],
-        extra_objects=['stabilizer_search/clib/StabilizerCPP/out/libsymplectic_stabilizer.a'],
+        # extra_objects=['stabilizer_search/clib/StabilizerCPP/out/libsymplectic_stabilizer.a'],
         libraries=['symplectic_stabilizer'],
         # extra_link_args=['-static'],
         language="c++",
