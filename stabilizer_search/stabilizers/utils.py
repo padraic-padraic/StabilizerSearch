@@ -131,23 +131,26 @@ def add_sign_to_groups(groups, n_qubits, n_states):
 
 
 def is_real(obj):
-    if type(obj)==list or type(obj)==tuple:
-        for o in obj:
-            if not is_real(o):
-                return False
-        return True
-    elif obj.dtype==np.bool:
-        if obj.size > obj.shape[0]:
-            n_qubits = obj.shape[0]
-            for i in range(obj.shape[0]):
-                if not is_real(obj[i]):
+    try:
+        return obj.is_real()
+    except AttributeError:
+        if type(obj)==list or type(obj)==tuple:
+            for o in obj:
+                if not is_real(o):
                     return False
             return True
+        elif obj.dtype==np.bool:
+            if obj.size > obj.shape[0]:
+                n_qubits = obj.shape[0]
+                for i in range(obj.shape[0]):
+                    if not is_real(obj[i]):
+                        return False
+                return True
+            else:
+                n_qubits = obj.size //2
+                return np.sum(obj[:n_qubits] & obj[n_qubits:])%2 ==0
         else:
-            n_qubits = obj.size //2
-            return np.sum(obj[:n_qubits] & obj[n_qubits:])%2 ==0
-    else:
-        return not (np.any(np.imag(obj)))
+            return not (np.any(np.imag(obj)))
 
 
 def np_inc_in_list(arr, _list):

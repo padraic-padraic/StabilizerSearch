@@ -8,6 +8,7 @@ transforming between a Numpy matrix and other representations."""
 
 from random import sample
 
+from ..clib.c_stabilizers import c_get_stabilizer_groups, c_get_eigenstates
 from .eigenstates import py_find_eigenstates
 from .py_generators import get_positive_stabilizer_groups as py_get_groups
 from .utils import *
@@ -102,7 +103,6 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
                     save_to_file('states', stabilizer_states, STATE_STRING,
                                  n_qubits)
     if stabilizer_states is None:
-        #TODO: Filter real groups instead!
         generators = generator_func(n_qubits, n_states, real_only)
         stabilizer_states = eigenstate_func(generators, n_states)
         if use_cached and get_all and not real_only:

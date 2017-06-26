@@ -25,7 +25,7 @@ PYBIND11_PLUGIN(c_stabilizers) {
         .def("commutes", &SymplecticPauli::commutes)
         .def("__str__", &SymplecticPauli::toString)
         .def("__repr__", [](const SymplecticPauli& p){
-            return "<c_stabilizers.SymplecticPauli "+ p.toString() + ">";
+            return "<c_stabilizers.SymplecticPauli: "+ p.toString() + ">";
         })
         .def("is_real", &SymplecticPauli::isReal)
         .def("to_matrix", &SymplecticPauli::toMatrix)
