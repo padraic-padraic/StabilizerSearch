@@ -16,8 +16,8 @@ def xnor(a,b):
     return (a&b)^(~a&~b)
 
 
-def xor(a,b):
-      return (a|b)&~(a&b)
+# def xor(a,b):
+#       return (a|b)&~(a&b)
 
 
 def symplectic_inner_product(n, a, b):
@@ -33,7 +33,7 @@ class PauliArray(object):
     def __init__(self, n_qubits, number=0):
         self.n_qubits = n_qubits
         bin_string = bin(number)[2:] #strip the 0b from the string
-        bin_string = '0'*(2*n_qubits - len(bin_string)) + bin_string
+        bin_string = bin_string.zfill(2*n_qubits)
         self.bits = np.array([b == '1' for b in bin_string])
 
     @classmethod
@@ -44,6 +44,7 @@ class PauliArray(object):
 
     @classmethod
     def from_string(cls, _str):
+        n_qubits = len(_str)
         pauli = cls(n_qubits)
         pauli.bits = array_from_string(_str)
         return pauli
@@ -52,7 +53,8 @@ class PauliArray(object):
         if self.n_qubits != other.n_qubits:
             raise ValueError("Paulis act on different numbers of qubits.")
         out = PauliArray(self.n_qubits)
-        out.bits == xor(self.bits, other.bits)
+        out.bits = np.logical_xor(self.bits, other.bits)
+        return out
 
     def __imul__(self, other):
         return self.__mul__(other)
@@ -60,14 +62,17 @@ class PauliArray(object):
     def __eq__(self, other):
         if self.n_qubits != other.n_qubits:
             raise ValueError("Paulis act on different numbers of qubits.")
-        return np.array_equal(self.bits, out.bits)
+        return np.array_equal(self.bits, other.bits)
 
     def __repr__(self):
         return '<Pauli Array on {} qubits: {}'.format(self.n_qubits, 
                                                       array_to_string(self.bits))
 
     def __str__(self):
-        return array_to_string('self.bits')
+        return array_to_string(self.bits)
+
+    def __int__(self):
+        return bool_to_int(self.bits)
 
     def commute(self, other):
         if self.n_qubits != other.n_qubits:
@@ -75,8 +80,10 @@ class PauliArray(object):
         return symplectic_inner_product(self.n_qubits, self.bits, other.bits)==0
 
     def is_real(self):
-        return np.sum(self.bits[:self.n_qubits] & 
-                      self.bits[self.n_qubits:])%2 ==0
+        return np.sum(self.bits[:self.n_qubits]&self.bits[self.n_qubits:])%2 ==0
+
+    def to_matrix(self):
+        return array_to_pauli(self.bits)
 
 
 class GeneratorSet(object):
@@ -158,7 +165,7 @@ class BinarySubspace(object):
 
     def add(self, obj):
         for _el in self._items:
-            if np.all(xnor(obj, _el)):
+            if _el == obj:
                 return self
         self.order +=1
         self.generators.append(obj)
@@ -197,7 +204,7 @@ def get_positive_stabilizer_groups(n_qubits, n_states, real_only=False):
         #If generating less than all, we'll add signs in randomly to compenstate
         target = n_states
     # bitstrings = gen_bitstrings(n_qubits)
-    paulis = [PauliArray(n_qubits, i) for i in range(1, pow(2,2*n))]
+    paulis = [PauliArray(n_qubits, i) for i in range(1, pow(2,2*n_qubits))]
     # shuffle(bitstrings)
     shuffle(paulis)
     subspaces = []
@@ -215,7 +222,7 @@ def get_positive_stabilizer_groups(n_qubits, n_states, real_only=False):
             continue
         if len(candidate._items) < pow(2,n_qubits):
             continue
-        res = tuple(i for i in sorted(candidate._items, key=bool_to_int))
+        res = tuple(i for i in sorted(candidate._items, key=int))
         if np.any([np.all([_el1==_el2 for _el1, _el2 in zip(res, space)]) 
                    for space in subspaces]):
             continue

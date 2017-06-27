@@ -9,12 +9,14 @@ transforming between a Numpy matrix and other representations."""
 from random import sample
 
 from ..clib.c_stabilizers import c_get_stabilizer_groups, c_get_eigenstates
+from ..clib.c_stabilizers import SymplecticPauli, StabilizerMatrix
 from .eigenstates import py_find_eigenstates
 from .py_generators import get_positive_stabilizer_groups as py_get_groups
-from .py_generators import Generator Set, PauliArray
+from .py_generators import GeneratorSet, PauliArray
 from .utils import *
 
 import os.path as path
+import numpy as np
 
 
 __all__ = ['get_stabilizer_states']    
@@ -86,7 +88,7 @@ WRITE_METHODS = {'generators': gens_to_file,
                  'states': states_to_file}
 METHODS = {'c':{'generators':c_get_stabilizer_groups,
                 'eigenstates':c_get_eigenstates},
-           'python':{'generators':py_generators,
+           'python':{'generators':py_get_groups,
                      'eigenstates':py_find_eigenstates}
           }
 CLASSES = {'c':{'paulis':SymplecticPauli,
@@ -145,8 +147,7 @@ def load_groups(n_qubits, n_states, real_only=False,
             groups = gens_from_file(f, n_qubits, PauliClass, GroupClass)
         if real_only:
             groups = [g for g in groups if is_real(i)]
-            if n_states != n_stabilizer_states(n_qubits) 
-            and len(groups) < n_states:
+            if len(groups) < n_states:
                 if pow(2, n_qubits)*len(groups) < n_states:
                     raise RuntimeError('There are insufficient real states on {} qubits'.format(n_qubits))
         if n_states < n_stabilizer_states(n_qubits)//pow(2,n_qubits):
@@ -209,7 +210,7 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
         eigenstate_func = METHODS[backend]['eigenstates']
     if PauliClass is None:
         PauliClass = CLASSES[backend]['paulis']
-    if GroupClass is None
+    if GroupClass is None:
         GroupClass = CLASSES[backend]['groups']
     stabilizer_states = None
     if n_states is None:

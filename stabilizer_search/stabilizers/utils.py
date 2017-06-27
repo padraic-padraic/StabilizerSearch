@@ -14,8 +14,7 @@ I = qeye(2)
 
 __all__ = ['n_stabilizer_states', 'array_to_pauli', 'array_to_string',
            'get_sign_strings','bool_to_int', 'add_sign_to_groups',
-           'states_from_file', 'states_to_file', 'gens_from_file', 
-           'gens_to_file', 'is_real', 'np_inc_in_list']
+           'is_real', 'np_inc_in_list']
 
 
 def bool_to_int(bits):
