@@ -78,6 +78,47 @@ class PauliArray(object):
         return np.sum(self.bits[:self.n_qubits] & 
                       self.bits[self.n_qubits:])%2 ==0
 
+
+class GeneratorSet(object):
+
+    def __init__(self, paulis, phase=0):
+        self.n_qubits = len(paulis)
+        self.generators = paulis
+        self.phase = phase
+
+    def __contains__(self, el):
+        for it in self.generators:
+            if el==it:
+                return True
+        return False
+
+    def __iter__(self):
+        for item in self.generators:
+            yield(item)
+
+    def __len__(self):
+        return len(self.generators)
+
+    def is_real(self):
+        for p in self.generators:
+            if not p.is_real():
+                return False
+        return True
+
+    def get_projector(self):
+        pauli_matrices = [p.to_matrix() for p in self.generators]
+        if self.phase != 0:
+            bstr = bin(self.phase)[2:].zfill(2*self.n_qubits)
+            for i, b in enumerate(bstr):
+                if b=='1':
+                    pauli_matrices[i] *=-1.
+        return find_projector(pauli_matrices)
+
+    def get_stabilizer_state(self):
+        projector = self.get_projector()
+        return find_eigenstate(projector)
+
+
 class BinarySubspace(object):
     """Set-like class for PauliArray objects to generate a closed subspace."""
     def __init__(self, *data):
@@ -161,7 +202,7 @@ def get_positive_stabilizer_groups(n_qubits, n_states, real_only=False):
     shuffle(paulis)
     subspaces = []
     generators = []
-    for group in combinations(bitstrings, n_qubits):
+    for group in combinations(paulis, n_qubits):
         if not paulis_commute(n_qubits, group):
             continue
         if np.linalg.matrix_rank(np.matrix([g.bits for g in group])) < n_qubits:
@@ -175,7 +216,7 @@ def get_positive_stabilizer_groups(n_qubits, n_states, real_only=False):
         if len(candidate._items) < pow(2,n_qubits):
             continue
         res = tuple(i for i in sorted(candidate._items, key=bool_to_int))
-        if np.any([np.all([_el1==_el24 for _el1, _el2 in zip(res, space)]) 
+        if np.any([np.all([_el1==_el2 for _el1, _el2 in zip(res, space)]) 
                    for space in subspaces]):
             continue
         subspaces.append(res)

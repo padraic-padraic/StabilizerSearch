@@ -15,6 +15,10 @@
 
 namespace py = pybind11;
 
+SymplecticPauli pauliFromString(py::str pauli_literals){
+    return SymplecticPauli(std::string(pauli_literals));
+}
+
 PYBIND11_PLUGIN(c_stabilizers) {
     py::module m("c_stabilizers", "c backend for stabilizer group and state generation.");
     py::class_<SymplecticPauli>(m, "SymplecticPauli")
@@ -29,6 +33,7 @@ PYBIND11_PLUGIN(c_stabilizers) {
         })
         .def("is_real", &SymplecticPauli::isReal)
         .def("to_matrix", &SymplecticPauli::toMatrix)
+        .def("from_string", &pauliFromString)
         .def(py::self == py::self)
         .def(py::self != py::self)
         .def(py::self < py::self)
