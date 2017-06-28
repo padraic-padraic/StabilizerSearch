@@ -65,7 +65,7 @@ def states_from_file(f, n_qubits):
     while line:
         line = line.strip()
         if line=='STATE':
-            state = np.matrix(np.zeros((pow(2,n_qubits), 1), dtype=np.complex_))
+            state = np.array(np.zeros((pow(2,n_qubits)), dtype=np.complex_))
             counter = 0
             while True:
                 line = f.readline()
@@ -108,37 +108,6 @@ def get_file_path(format_string, n_qubits):
     return _path
 
 
-# def try_load(_type, format_string, n_qubits, n_states, real_only=False):
-#     loader = LOAD_METHODS.get(_type, None)
-#     if loader is None:
-#         raise KeyError("Don't know how to load: "+_type)
-#     f_string = format_string.format(n_qubits)
-#     package_path = path.join(APP_DIR, 'data', f_string)
-#     rel_path = path.join('./', f_string)
-#     if path.exists(package_path):
-#         with open(package_path, 'r') as _f:
-#             items = loader(_f, n_qubits)
-#     elif path.exists(rel_path):
-#         with open(rel_path, 'r') as _f:
-#             items = loader(_f, n_qubits)
-#     else:
-#         items = None
-#     if items is not None:
-#         if real_only:
-#             items = [i for i in items if is_real(i)]
-#             if n_states != n_stabilizer_states(n_qubits) 
-#                and len(items) < n_states:
-#                 if type=='states':
-#                     raise RuntimeError('There are insufficient real states on {} qubits'.format(n_qubits))
-#                 else:
-#                     if pow(2,n_qubits)*len(items) < n_states:
-#                         raise RuntimeError('There are insufficient real states on {} qubits'.format(n_qubits))
-#         if n_states!= n_stabilizer_states(n_qubits):
-#             if _type!='groups' or n_states < n_stabilizer_states(n_qubits)//pow(2,n_qubits):
-#                 return sample(items, n_states)
-#     return items
-
-
 def load_groups(n_qubits, n_states, real_only=False, 
                 PauliClass=SymplecticPauli, GroupClass=GeneratorSet):
     f_path = get_file_path(GROUP_STRING, n_qubits)
@@ -162,7 +131,7 @@ def load_states(n_qubits, n_states, real_only=False):
         with open(f_path, 'r') as f:
             states = states_from_file(f, n_qubits)
         if real_only:
-            states = [s for s in states if s.is_real()]
+            states = [s for s in states if is_real(s)]
             if len(states) < n_states:
                 raise AttributeError('There are insufficient real states on {} qubits'.format(n_qubits))
         if n_states < len(states):
@@ -204,6 +173,7 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
     PauliClass = kwargs.pop('pauli_class', None)
     GroupClass = kwargs.pop('group_class', None)
     backend = kwargs.pop('backend', 'c')
+    verbose = kwargs.pop('verbose', None)
     if generator_func is None:
         generator_func = METHODS[backend]['generators']
     if eigenstate_func is None:
@@ -212,6 +182,8 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
         PauliClass = CLASSES[backend]['paulis']
     if GroupClass is None:
         GroupClass = CLASSES[backend]['groups']
+    if verbose and backend != 'c':
+        raise NotImplementedError('Only the c backend knows about verbose generation.')
     stabilizer_states = None
     if n_states is None:
         get_all = True
@@ -229,8 +201,12 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
                     save_to_file('states', stabilizer_states, STATE_STRING,
                                  n_qubits)
     if stabilizer_states is None:
-        generators = generator_func(n_qubits, n_states, real_only)
-        stabilizer_states = eigenstate_func(generators, n_states)
+        if not verbose:
+            generators = generator_func(n_qubits, n_states, real_only)
+            stabilizer_states = eigenstate_func(generators, n_states)
+        else:
+            generators = generator_func(n_qubits, n_states, real_only, verbose)
+            stabilizer_states = eigenstate_func(generators, n_states, verbose)
         if use_cached and get_all and not real_only:
             save_to_file('generators', generators, GROUP_STRING, n_qubits)
             save_to_file('states', stabilizer_states, STATE_STRING, n_qubits)

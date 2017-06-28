@@ -5,6 +5,7 @@ import numpy as np
 cimport numpy as np
 
 from libc.math cimport exp
+from math import log2
 from random import random, randrange
 
 # from ..linalg import get_projector
@@ -12,6 +13,7 @@ from ..mat import X, Y, Z
 from ..stabilizers import get_stabilizer_states
 from ..stabilizers.utils import array_to_pauli
 
+import sys
 
 DTYPE=np.complex128
 ctypedef np.complex128_t DTYPE_t
@@ -29,7 +31,7 @@ cpdef get_projector(list states):
             value = np.asscalar(states[index1][index2])
             vec_matrix[index2,index1] = value
     out_q, out_r = np.linalg.qr(vec_matrix)
-    projector = np.dot(out_q, np.conj(np.transpose(out_q)))
+    projector = np.matmul(out_q, np.conj(np.transpose(out_q)))
     return projector
 
 
@@ -73,24 +75,39 @@ cdef double trace_distance(np.ndarray[DTYPE_t, ndim=2] a,
     eigvals = np.absolute(np.linalg.eigvalsh(a-b))
     return 0.5*np.sum(eigvals)
 
+# cpdef np.ndarray[DTYPE_t, ndim=1] apply_pauli_move(np.ndarray[DTYPE_t, ndim=2] move, 
+#                              np.ndarray[DTYPE_t, ndim=1] target):
+#     cdef int index1, index2, dim
+#     cdef DTYPE_t value
+#     dim = target.size
+#     cdef np.ndarray[DTYPE_t, ndim=1] out = np.zeros(dim, dtype=np.complex128)
+#     for index1 in range(dim):
+#         for index2 in range(dim):
+#             value = move[index1, index2] * target[index2]
+#             out[index1] = value
+#     return out
+
 
 cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
                  int chi, double beta, int beta_max, double beta_diff,
-                 int walk_steps, bint is_state, bint real_only):
-    print("Get stabilizers")
-    cdef list stabilizers = get_stabilizer_states(n_qubits, chi, real_only=True)
-    cdef np.ndarray[DTYPE_t, ndim=2] projector, new_projector, new_state
+                 int walk_steps, bint is_state, bint real_only, bint verbose):
+    cdef list stabilizers = get_stabilizer_states(n_qubits, chi, 
+                                                  real_only=real_only,
+                                                  verbose=verbose)
+    cdef np.ndarray[DTYPE_t, ndim=2] projector, new_projector
+    cdef np.ndarray[DTYPE_t, ndim=2] new_state
+    new_state = np.zeros((pow(2,n_qubits), 1), dtype=np.complex128)
     cdef double distance, new_distance, new_norm, p_accept
     cdef int dim = stabilizers[0].size, counter, vec_index
-    cdef np.ndarray[DTYPE_t, ndim=2] I = np.identity(pow(2, n_qubits), dtype=np.complex128)
-    print("Build projector")
+    cdef np.ndarray[DTYPE_t, ndim=2] I = np.identity(pow(2, n_qubits), 
+                                                     dtype=np.complex128)
     projector = get_projector(stabilizers)
     if is_state:
         distance = 1 - np.linalg.norm(projector*target, 2)
     else:
         distance = trace_distance(projector, target)
     while beta <= beta_max:
-        print("Anneal Progress : {}%".format((beta-1)/beta_diff))
+        # print("Anneal Progress : {}%".format((beta-1)/beta_diff))
         for counter in range(walk_steps):
             if np.allclose(distance, 0.):
                 return True, chi, stabilizers
@@ -100,9 +117,10 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
                     if np.any(np.imag(move)):
                         continue
                 move_target = randrange(chi)
-                new_state = (I+move)*stabilizers[move_target]
+                new_state = np.matmul((I+move), 
+                                      stabilizers[move_target].reshape(dim, 1))
                 new_norm = np.linalg.norm(new_state, 2)
-                new_state = new_state / new_norm
+                new_state = np.divide(new_state, new_norm)
                 if np_inc_in_list(new_state, stabilizers):
                     continue
                 if not np.allclose(new_norm, 0.):
@@ -139,6 +157,7 @@ def cy_do_random_walk(n_qubits, target, chi, **kwargs):
     beta_diff = (beta_max-beta)/anneal_steps
     walk_steps = kwargs.pop('M', 1000)
     real_only = not(np.any(np.imag(target)))
+    verbose = kwargs.pop('verbose', False)
     res = random_walk(n_qubits, target, chi, beta, beta_max, beta_diff, 
-                      walk_steps, is_state, real_only)
+                      walk_steps, is_state, real_only, verbose)
     return res

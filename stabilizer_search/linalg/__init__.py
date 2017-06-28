@@ -1,4 +1,4 @@
-from ..clib.c_stabilizers import c_get_projector
+# from ..clib.c_stabilizers import c_get_projector
 from .gram_schmidt import ortho_projector as gs_projector
 from .symmetric_subspace import symmetric_projector
 

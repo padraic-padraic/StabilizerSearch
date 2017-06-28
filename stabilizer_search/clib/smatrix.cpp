@@ -1,4 +1,4 @@
-#include <pybind11/pybind11.h>
+
 #include <pybind11/eigen.h>
 #include <pybind11/operators.h>
 #include <pybind11/stl.h>
@@ -56,11 +56,11 @@ PYBIND11_PLUGIN(c_stabilizers) {
         .def(py::self != py::self);
 
     m.def("c_get_stabilizer_groups", 
-           (std::vector<StabilizerMatrix> (*)(unsigned int, unsigned int, bool))&getStabilizerGroups,
-          py::arg("n_qubits"), py::arg("n_states"), py::arg("real_only")=false);
+           (std::vector<StabilizerMatrix> (*)(unsigned int, unsigned int, bool, bool))&getStabilizerGroups,
+            py::arg("n_qubits"), py::arg("n_states"), py::arg("real_only")=false, py::arg("verbose")=false);
     m.def("c_get_eigenstates", 
-        (VectorList (*)(std::vector<StabilizerMatrix>, unsigned int))&getStabilizerStates,
-        py::arg("groups"), py::arg("n_states"));
+        (VectorList (*)(std::vector<StabilizerMatrix>, unsigned int, bool))&getStabilizerStates,
+        py::arg("groups"), py::arg("n_states"), py::arg("verbose")=false);
     m.def("c_get_projector", &orthoProjector, py::arg("states"));
     return m.ptr();
 }
