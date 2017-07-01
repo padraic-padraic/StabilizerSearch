@@ -1,9 +1,9 @@
-"""Module for obtaining Stabilizer States as Numpy arrays. The main method 
-provided by this module is `get_stabilizer_states`, which is also available in 
+"""Module for obtaining Stabilizer States as Numpy arrays. The main method
+provided by this module is `get_stabilizer_states`, which is also available in
 the package namespace.
 
-Potential future plans would allow a more general representation than Numpy 
-states. Alternatively, we could look to implement a wrapper function capable of 
+Potential future plans would allow a more general representation than Numpy
+states. Alternatively, we could look to implement a wrapper function capable of
 transforming between a Numpy matrix and other representations."""
 
 from random import sample
@@ -13,13 +13,14 @@ from ..clib.c_stabilizers import SymplecticPauli, StabilizerMatrix
 from .eigenstates import py_find_eigenstates
 from .py_generators import get_positive_stabilizer_groups as py_get_groups
 from .py_generators import GeneratorSet, PauliArray
+from .seed_states import random_computational_states, random_product_states
 from .utils import *
 
 import os.path as path
 import numpy as np
 
 
-__all__ = ['get_stabilizer_states']    
+__all__ = ['get_stabilizer_states']
 
 
 def gens_to_file(generators, _f):
@@ -36,7 +37,7 @@ def states_to_file(states, _f):
     for state in states:
         _f.write('STATE\n')
         for _el in state:
-            _f.write('({}, {})\n'.format(np.asscalar(np.real(_el)), 
+            _f.write('({}, {})\n'.format(np.asscalar(np.real(_el)),
                                        np.asscalar(np.imag(_el))))
         _f.write('ENDSTATE\n\n')
 
@@ -96,7 +97,9 @@ CLASSES = {'c':{'paulis':SymplecticPauli,
            'python':{'paulis':PauliArray,
                     'groups':GeneratorSet},
           }
-
+SEEDED_STATES = {'computational':random_computational_states,
+                 'product': random_product_states
+                 }
 
 def get_file_path(format_string, n_qubits):
     f_string = format_string.format(n_qubits)
@@ -108,7 +111,7 @@ def get_file_path(format_string, n_qubits):
     return _path
 
 
-def load_groups(n_qubits, n_states, real_only=False, 
+def load_groups(n_qubits, n_states, real_only=False,
                 PauliClass=SymplecticPauli, GroupClass=GeneratorSet):
     f_path = get_file_path(GROUP_STRING, n_qubits)
     if f_path is not None:
@@ -152,14 +155,14 @@ def save_to_file(_type, items, format_string, n_qubits):
 
 
 def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
-    """Method for returning a set of stabilizer states. It takes the following 
+    """Method for returning a set of stabilizer states. It takes the following
     arguments:
     Positional:
       n_qubits: The number of qubits our stabilizer states will be built out of.
-      n_states (Optional): Number of stabilizer states we require. If not 
+      n_states (Optional): Number of stabilizer states we require. If not
       specified, defaults to all Stabilier states.
     Keyword:
-      use_cached: Boolean, defaults to True and looks in the package or working 
+      use_cached: Boolean, defaults to True and looks in the package or working
       dir for serialised states or generators.
       generator_backend: Function which searches for the stabilizer generators
       eigenstate_backend: Function which takes sets of stabilizer generators and
@@ -170,6 +173,11 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
     generator_func = kwargs.pop('generator_backend', None)
     eigenstate_func = kwargs.pop('eigenstate_backend', None)
     real_only = kwargs.pop('real_only', False)
+    seed = kwargs.pop('seed', None)
+    if seed is not None:
+        if n_states > pow(2,n_qubits):
+            raise NotImplementedError("Seeded states are only used in finding Stabilizer Rank decompositions, and generating more than 2^n states is not implemented.")
+        return SEEDED_STATES[seed](n_qubits, n_states, real_only=real_only)
     PauliClass = kwargs.pop('pauli_class', None)
     GroupClass = kwargs.pop('group_class', None)
     backend = kwargs.pop('backend', 'c')
@@ -193,7 +201,7 @@ def get_stabilizer_states(n_qubits, n_states=None, **kwargs):
     if use_cached:
         stabilizer_states = load_states(n_qubits, n_states, real_only)
         if stabilizer_states is None:
-            groups = load_groups(n_qubits, n_states, real_only, 
+            groups = load_groups(n_qubits, n_states, real_only,
                                  PauliClass, GroupClass)
             if groups is not None:
                 stabilizer_states = eigenstate_func(groups, n_states)

@@ -15,7 +15,13 @@ target_string = 'Two-fold T State'
 n_qubits = 2
 
 BF = BruteForceSearch(target_state, target_string, n_qubits)
-RW = RandomWalkSearch(target_state, target_string, n_qubits, 2, use_cached=False)
+RW = RandomWalkSearch(target_state, target_string, n_qubits, 2,
+                      use_cached=False)
+RW_cseed = RandomWalkSearch(target_state, target_state, n_qubits, 2,
+                            use_cached=False, seed='computational')
+RW_pseed = RandomWalkSearch(target_state, target_state, n_qubits, 2,
+                            use_cached=False, seed='product')
+
 
 # res = BF()
 # print(res)
@@ -25,7 +31,16 @@ def test():
     res = RW()
     # print(res)
 
+def test_c():
+    res = RW_cseed()
+
+def test_p():
+    res = RW_pseed()
 
 if __name__ == '__main__':
-    test()
-    # print(timeit.timeit("test()", "from __main__ import test", number=20))
+    t1 = timeit.repeat("test()", "from __main__ import test", number=5, repeat=3)
+    t2 = timeit.repeat("test_c()", "from __main__ import test_c", number=5, repeat=3)
+    t3 = timeit.repeat("test_p()", "from __main__ import test_p", number=5, repeat=3)
+    print(t1)
+    print(t2)
+    print(t3)

@@ -114,7 +114,7 @@ def add_sign_to_groups(groups, n_qubits, n_states):
     if n_states==n_stabs:
         for i in range(len(groups)):
             for _bits in sign_strings:
-                        groups.append([-1*p if b else p 
+                        groups.append([-1*p if b else p
                                             for p, b in zip(groups[i], _bits)])
         print('Added sign to produce {} total groups'.format(len(groups)))
     elif n_states > n_pos:
@@ -157,4 +157,3 @@ def np_inc_in_list(arr, _list):
         if np.array_equal(arr, el):
             return True
     return False
-
