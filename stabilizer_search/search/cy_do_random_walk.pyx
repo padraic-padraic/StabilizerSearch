@@ -4,7 +4,7 @@
 import numpy as np
 cimport numpy as np
 
-from libc.math cimport exp
+from libc.math cimport exp, asin
 from math import log2
 from random import random, randrange
 
@@ -17,7 +17,6 @@ import sys
 
 DTYPE=np.complex128
 ctypedef np.complex128_t DTYPE_t
-
 
 cpdef get_projector(list states):
     cdef unsigned int hilbert_dim, n_vecs, index1, index2
@@ -76,10 +75,23 @@ cdef double trace_distance(np.ndarray[DTYPE_t, ndim=2] a,
     return 0.5*np.sum(eigvals)
 
 
+cdef double norm_distance(np.ndarray[DTYPE_t, ndim=2] a,
+                           np.ndarray[DTYPE_t, ndim=2] b):
+    return np.linalg.norm(a-b)
+
+cdef double subspace_distance(np.ndarray[DTYPE_t, ndim=2] a,
+                              np.ndarray[DTYPE_t, ndim=2]b):
+    cdef double norm
+    norm = np.linalg.norm(np.transpose(b)-np.matmul(
+                          np.matmul(np.transpose(b), a),
+                          np.transpose(a)), 2)
+    return asin(norm)
+
+
 cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
                  int chi, double beta, int beta_max, double beta_diff,
                  int walk_steps, bint is_state, bint real_only, bint verbose,
-                 seed):
+                 seed, mode):
     print("Get stabilizers")
     cdef list stabilizers = get_stabilizer_states(n_qubits, chi,
                                                   real_only=real_only,
@@ -96,7 +108,13 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
     if is_state:
         distance = 1 - np.linalg.norm(projector*target, 2)
     else:
-        distance = trace_distance(projector, target)
+        if mode == 'inclusion':
+            print('Using the angle')
+            distance_func = subspace_distance
+        else:
+            print('Doing trace_distance')
+            distance_func = trace_distance
+        distance = distance_func(projector, target)
     while beta <= beta_max:
         # print("Anneal Progress : {}%".format((beta-1)/beta_diff))
         for counter in range(walk_steps):
@@ -121,7 +139,7 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
             if is_state:
                 new_distance = 1-np.linalg.norm(new_projector*target, 2)
             else:
-                new_distance = np.linalg.norm(new_projector-target)
+                new_distance = distance_func(new_projector, target)
             if new_distance < distance:
                 for vec_index in range(dim):
                     stabilizers[move_target][vec_index] = new_state[vec_index]
@@ -140,10 +158,12 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
 def cy_do_random_walk(n_qubits, target, chi, **kwargs):
     if target.shape[1]==1:
         is_state = True
+        mode = None
     else:
         is_state = False
+        mode = kwargs.pop('projector_mode', 'inclusion')
     beta = kwargs.pop('beta_init', 1)
-    beta_max = kwargs.pop('beta_max', 4000)
+    beta_max = kwargs.pop('beta_max' 4000)
     anneal_steps = kwargs.pop('steps', 100)
     beta_diff = (beta_max-beta)/anneal_steps
     walk_steps = kwargs.pop('M', 1000)
@@ -151,5 +171,5 @@ def cy_do_random_walk(n_qubits, target, chi, **kwargs):
     verbose = kwargs.pop('verbose', False)
     seed = kwargs.pop('seed', None)
     res = random_walk(n_qubits, target, chi, beta, beta_max, beta_diff,
-                      walk_steps, is_state, real_only, verbose, seed)
+                      walk_steps, is_state, real_only, verbose, seed, mode)
     return res
