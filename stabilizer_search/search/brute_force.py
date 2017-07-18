@@ -20,7 +20,7 @@ def do_brute_force(n_qubits, target_state, chi=None, **kwargs):
     chi: The rank found
     basis: the resulting decomposition"""
     dims = pow(2, n_qubits)
-    stabilizers = get_stabilizer_states(n_qubits)
+    stabilizers = get_stabilizer_states(n_qubits, **kwargs)
     shuffle(stabilizers)
     if chi is None:       
         for i in range(1, pow(2, n_qubits)):

@@ -13,6 +13,8 @@ def calculate_overlap(states, target):
 
 def get_projector(vectors):
     dim = vectors[0].size
+    for i in range(len(vectors)):
+        vectors[i] = vectors[i].reshape(dim,1)
     vec_mat = np.matrix(np.zeros((dim, len(vectors)), dtype=np.complex_))
     for i in range(len(vectors)):
         vec_mat[:,i] = vectors[i]

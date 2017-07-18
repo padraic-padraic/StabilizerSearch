@@ -4,8 +4,8 @@
 import numpy as np
 cimport numpy as np
 
-from libc.math cimport exp, asin
-from math import log2
+from libc.math cimport exp
+from math import asin, log2
 from random import random, randrange
 
 # from ..linalg import get_projector
@@ -85,6 +85,9 @@ cdef double subspace_distance(np.ndarray[DTYPE_t, ndim=2] a,
     norm = np.linalg.norm(np.transpose(b)-np.matmul(
                           np.matmul(np.transpose(b), a),
                           np.transpose(a)), 2)
+    if norm <0:
+        norm = -1*norm
+    norm = min((1,norm))
     return asin(norm)
 
 
@@ -106,7 +109,7 @@ cdef random_walk(int n_qubits, np.ndarray[DTYPE_t, ndim=2] target,
                                                      dtype=np.complex128)
     projector = get_projector(stabilizers)
     if is_state:
-        distance = 1 - np.linalg.norm(projector*target, 2)
+        distance = 1. - np.linalg.norm(projector*target, 2)
     else:
         if mode == 'inclusion':
             print('Using the angle')
@@ -159,11 +162,13 @@ def cy_do_random_walk(n_qubits, target, chi, **kwargs):
     if target.shape[1]==1:
         is_state = True
         mode = None
+        print('State mode')
     else:
+        print('Projector mode')
         is_state = False
         mode = kwargs.pop('projector_mode', 'inclusion')
     beta = kwargs.pop('beta_init', 1)
-    beta_max = kwargs.pop('beta_max' 4000)
+    beta_max = kwargs.pop('beta_max', 4000)
     anneal_steps = kwargs.pop('steps', 100)
     beta_diff = (beta_max-beta)/anneal_steps
     walk_steps = kwargs.pop('M', 1000)

@@ -31,6 +31,9 @@ PYBIND11_PLUGIN(c_stabilizers) {
         .def("__repr__", [](const SymplecticPauli& p){
             return "<c_stabilizers.SymplecticPauli: "+ p.toString() + ">";
         })
+        .def("__len__", [](const SymplecticPauli& p){
+            return p.NQubits();
+        })
         .def("is_real", &SymplecticPauli::isReal)
         .def("to_matrix", &SymplecticPauli::toMatrix)
         .def("from_string", &pauliFromString)

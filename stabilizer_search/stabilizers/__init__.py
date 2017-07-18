@@ -116,7 +116,7 @@ def load_groups(n_qubits, n_states, real_only=False,
     f_path = get_file_path(GROUP_STRING, n_qubits)
     if f_path is not None:
         with open(f_path, 'r') as f:
-            groups = gens_from_file(f, n_qubits, PauliClass, GroupClass)
+            groups = gens_from_file(f, PauliClass, GroupClass)
         if real_only:
             groups = [g for g in groups if is_real(i)]
             if len(groups) < n_states:
