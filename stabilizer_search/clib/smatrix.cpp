@@ -6,6 +6,9 @@
 #include <Eigen/Eigenvalues>
 #include <Eigen/StdVector>
 #include <Eigen/Householder>
+#include <chrono>
+#include <math.h>
+#include <random>
 
 #include "lib/SymplecticPauli.h"
 #include "lib/StabilizerMatrix.h"
@@ -14,6 +17,9 @@
 #include "lib/orthogonalisation.h"
 
 namespace py = pybind11;
+
+std::mt19937 matrix_mt(0);
+std::mt19937::result_type matrix_seed;
 
 SymplecticPauli pauliFromString(py::str pauli_literals){
     return SymplecticPauli(std::string(pauli_literals));
@@ -37,6 +43,7 @@ PYBIND11_PLUGIN(c_stabilizers) {
         .def("is_real", &SymplecticPauli::isReal)
         .def("to_matrix", &SymplecticPauli::toMatrix)
         .def("from_string", &pauliFromString)
+        .def("random", &SymplecticPauli::random)
         .def(py::self == py::self)
         .def(py::self != py::self)
         .def(py::self < py::self)
@@ -54,6 +61,13 @@ PYBIND11_PLUGIN(c_stabilizers) {
         .def("linearly_independent", &StabilizerMatrix::linearlyIndependent)
         .def("get_projector", &StabilizerMatrix::projector)
         .def("get_stabilizer_state", &StabilizerMatrix::stabilizerState)
+        .def("__len__", [](const &StabilizerMatrix m){ return m.NQubits();})
+        .def("random", [](&StabilizerMatrix m){
+            matrix_seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            matrix_mt.seed(matrix_seed);
+            m.random();
+            m.phase = std::uniform_int_distribution<unsigned int>(0,pow(2.0, m.NQubits()), matrix_mt);
+        })
         .def("__str__", &StabilizerMatrix::toString)
         .def(py::self == py::self)
         .def(py::self != py::self);
