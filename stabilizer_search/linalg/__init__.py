@@ -4,7 +4,7 @@ from .symmetric_subspace import symmetric_projector
 
 import numpy as np
 
-def calculate_overlap(states, target):    
+def calculate_overlap(states, target):
     tot = 0
     for state in states:
         olp = np.sum(state.H*target)
@@ -21,3 +21,9 @@ def get_projector(vectors):
     q, r = np.linalg.qr(vec_mat)
     projector = q*q.H
     return projector
+
+def subspace_distance(a, b):
+    norm = np.linalg.norm(np.transpose(b)-np.matmul(
+                          np.matmul(np.transpose(b), a),
+                          np.transpose(a)), 2)
+    return asin(norm)
