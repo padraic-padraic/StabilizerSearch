@@ -1,2 +1,2 @@
 from .linalg import *
-from .uniaries import *
+from .unitaries import *

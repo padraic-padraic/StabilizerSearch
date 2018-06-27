@@ -1,7 +1,8 @@
 """Module to hold useful matrices"""
 
 from cmath import exp as cexp
-from math import pi, sqrt
+from math import asin, cos, pi, sin, sqrt
+from random import random
 
 import numpy as np
 
@@ -12,6 +13,7 @@ __all__=['qeye', 'X', 'Y', 'Z', 'S', 'H', 'T', 'hrandom_su2']
 def qeye(n):
     return np.eye(n, dtype=np.complex_)
 
+Id = np.eye(2, dtype=np.complex_)
 
 X = np.matrix([[0,1], [1,0]], dtype=np.complex_)
 

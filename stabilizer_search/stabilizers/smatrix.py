@@ -1,3 +1,5 @@
+from ..core.unitaries import Id, X, Y, Z, tensor
+
 from numba import vectorize, uint8, uint64, guvectorize, jit
 
 import numpy as np
@@ -40,9 +42,18 @@ __all__ = ['PauliBytes','StabilizerMatrix']
 
 P_LITERALS = ['I','Z','X','Y']
 
+P_MATRICES = [Id, Z, X, Y]
+
 @vectorize(["uint8(uint8,uint8)"])
 def get_literal_index(x_bit,z_bit):
     return (2 * x_bit) + z_bit
+
+@guvectorize([(uint8[:],uint8[:],uint64,uint8[:])],'(n),(n),()->(n)')
+def gu_get_literals(x_bytes, z_bytes, n_qubits, res):
+  for i in range(n_qubits):
+    index = i//8
+    shift = 7-(i%8)
+    res[i] = 2*((self.x_bytes[index] >> shift) & 1) + ((self.z_bytes[index]>>shift) & one)
 
 @vectorize(["uint8(uint8)"])
 def get_weight(char_byte):
@@ -78,6 +89,7 @@ class PauliBytes(object):
         self.phase = phase
         self.__matrix = None
         self.__ready_mat = False
+        self.__mat = None
         print(type(bin_string))
         print(isinstance(bin_string,list))
         if isinstance(bin_string,str):
@@ -133,6 +145,15 @@ class PauliBytes(object):
         res = np.zeros(1,dtype=np.uint64)
         weight_reduction(np.bitwise_or(self.xbytes, self.zbytes),res)
         return res[0]
+
+    @property
+    def mat(self):
+      if not self.__ready_mat:
+        indices = np.zeros([1,self.n_qubits],dtype=np.uint64)
+        gu_get_literals(self.xbytes, self.zbytes, self.n_qubits, indices)
+        self.__mat = tensor([P_MATRICES[i] for i in indices])
+        self.__ready_mat = True
+      return self.__mat
 
     def __mul__(self, other):
         self.__ready_mat = False
