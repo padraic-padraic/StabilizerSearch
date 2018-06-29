@@ -1,4 +1,4 @@
-from ..core.unitaries import Id, X, Y, Z, tensor
+from ..core.unitaries import Id, X, Y, Z, tensor, qeye
 
 from numba import vectorize, uint8, uint64, guvectorize, jit
 
@@ -237,8 +237,19 @@ class StabilizerMatrix(object):
                     i+=1
                     break
         return
-    # def get_projector(self):
-  #       pass
 
-    # def get_stabilizer_state(self):
-  #       pass
+    def get_projector(self):
+        eye = qeye(pow(2,self.n_qubits))
+        proj = 0.5 * (eye + self.paulis[0])
+        for i in range(1,len(self.paulis)):
+          proj = proj * (0.5 * (eye + self.paulis[i]))
+        return proj
+
+    def get_stabilizer_state(self):
+        projector = self.get_projector()
+        vals, vecs = np.linalg.eigh(projector)
+        vals = np.abs(vals)
+        for i in range(vals):
+          if np.allclose(vals,1.):
+            return np.matrix(vecs[:,i],dtype=np.complex_).reshape(dim, 1)
+        return None
