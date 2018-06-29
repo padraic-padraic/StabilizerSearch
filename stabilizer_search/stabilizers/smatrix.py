@@ -99,7 +99,7 @@ class PauliBytes(object):
                                       for b in bin_string[:n_qubits] ]))
             self.zbytes = np.packbits(np.array([True if b=='1' else False
                                       for b in bin_string[n_qubits:] ]))
-        elif isinstance(bin_string,list):
+        elif isinstance(bin_string,list) or isinstance(bin_string,np.ndarray):
             gap = 2*n_qubits - len(bin_string)
             if gap>0:
                 bin_string = [0]*(gap) + bin_string
@@ -122,8 +122,14 @@ class PauliBytes(object):
 
     @classmethod
     def from_pauli(cls, pauli):
-      cls = PauliBytes(pauli.n_qubits, '0')
-      cls.bytes = np.array(pauli.xbytes)
+      p = cls(pauli.n_qubits, '0')
+      p.xbytes = np.array(pauli.xbytes)
+      p.zbytes = np.array(pauli.zbytes)
+      return p
+
+    @classmethod
+    def random(cls, n_qubits, phase=0):
+        return cls(np.around(np.random.random(2*n_qubits)), phase)
 
     @property
     def bit_string(self):
@@ -238,6 +244,11 @@ class StabilizerMatrix(object):
                     break
         return
 
+    @classmethod
+    def random(cls, n_qubits):
+        return cls([PauliBytes.random(n_qubits) for i in range(n_qubits)])
+
+
     def get_projector(self):
         eye = qeye(pow(2,self.n_qubits))
         proj = 0.5 * (eye + self.paulis[0])
@@ -251,5 +262,7 @@ class StabilizerMatrix(object):
         vals = np.abs(vals)
         for i in range(vals):
           if np.allclose(vals,1.):
-            return np.matrix(vecs[:,i],dtype=np.complex_).reshape(dim, 1)
+            vec = np.matrix(vecs[:,i],dtype=np.complex_).reshape(dim, 1)
+            vec = vec / (np.linalg.norm(vec, 2))
+            return vec
         return None
