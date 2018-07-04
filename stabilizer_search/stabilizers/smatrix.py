@@ -1,5 +1,6 @@
 from ..core.unitaries import Id, X, Y, Z, tensor, qeye
 
+from itertools import combinations
 from numba import vectorize, uint8, uint64, guvectorize, jit
 
 import numpy as np
@@ -241,26 +242,31 @@ class StabilizerMatrix(object):
                             self.paulis[m] = (self.paulis[i]*self.paulis[m])
                     i+=1
                     break
-        return
 
     @classmethod
     def random(cls, n_qubits):
         return cls([PauliBytes.random(n_qubits) for i in range(n_qubits)])
 
     def set_phase(self, phase):
-      phase_string = None
-      if isinstance(phase, int):
-        phase_string = bin(phase)[2:].zfill(self.n_qubits)
-      elif isinstance(phase, str):
-        phase_string = phase.zfill(n_qubits)
-      if phase_string:
-        [self.paulis[i].phase = 1 if bit =='1' else
-         self.paulis[i].phase = 0 for i, bit in enumerate(phase_string)]
-      elif isinstance(phase, np.ndarray):
-        [self.paulis[i].phase = 1 if bit == 1 else
-         self.paulis[i].phase = 0 for i, bit in enumerate(phase)]
-      else:
-        raise TypeError("set_phase expects an integer, binary string, or numpy array")
+        phase_string = None
+        if isinstance(phase, int):
+            if phase >= pow(2,self.n_qubits):
+                raise IndexError("Phase num is larger than the group.")
+            phase_string = bin(phase)[2:].zfill(self.n_qubits)
+        elif isinstance(phase, str):
+            if len(phase)>self.n_qubits:
+                raise IndexError("Phase string is larger than the group.")
+            phase_string = phase.zfill(n_qubits)
+        if phase_string:
+            [self.paulis[i].phase = 1 if bit =='1' else
+             self.paulis[i].phase = 0 for i, bit in enumerate(phase_string)]
+        elif isinstance(phase, np.ndarray):
+            if phase.size() > pow(n_qubits):
+                raise IndexError("Phase string is larger than the group.")
+            [self.paulis[i].phase = 1 if bit == 1 else
+             self.paulis[i].phase = 0 for i, bit in enumerate(phase)]
+        else:
+            raise TypeError("set_phase expects an integer, binary string, or numpy array")
 
     def get_projector(self):
         eye = qeye(pow(2,self.n_qubits))
@@ -280,23 +286,48 @@ class StabilizerMatrix(object):
             return vec
         return None
 
+@jit
 def get_states_from_groups(groups, n_states):
-  n_qubits = groups[0].n_qubits
-  phases = pow(2,n_qubits)
-  states = []
-  append_state = states.append
-  n_found = 0
-  for p in range(phases):
-    p_string = bin(p)[2:].zfill(n_qubits)
-    for g in groups:
-      g.set_phase(p_string)
-      append_state(g.get_stabilizer_state())
-      n_found +=1
-      if n_found >= n_states:
-        break
-  if n_found < n_states:
-    raise ValueError("Unable to generate sufficient stabilizer states.")
-  return states
+    n_qubits = groups[0].n_qubits
+    phases = pow(2,n_qubits)
+    states = []
+    append_state = states.append
+    n_found = 0
+    for p in range(phases):
+        p_string = bin(p)[2:].zfill(n_qubits)
+        for g in groups:
+            g.set_phase(p_string)
+            append_state(g.get_stabilizer_state())
+            n_found +=1
+            if n_found >= n_states:
+                break
+    if n_found < n_states:
+        raise ValueError("Unable to generate sufficient stabilizer states.")
+    return states
 
-def generate_groups(n_qubits):
-  pass
+@jit
+def generate_groups(n_qubits, n_groups=None):
+    dim = pow(2,n_qubits)
+    b_strings = [np.packbits(np.array([True if b=='1' else False 
+                                       for b in [bin(x)[2:].zfill(2*n_qubits)
+                                       for x in range(1,dim)]
+                                      ])
+                )]
+    shuffle(b_strings)
+    groups = []
+    group_count = 0
+    if n_groups == None:
+        n_groups = n_stabilizer_states(n_qubits)/dim
+    append_group = groups.append
+    for strings in combinations(b_strings, n_qubits):
+        candidate = StabilizerMatrix([PauliBytes(s) for s in strings])
+        candidate.to_canonical_form()
+        candidate.set_phase(0)
+        if not candidate in groups:
+            append_group(candidate)
+            group_count += 1
+        if group_count == n_groups:
+            break
+    return groups
+
+
