@@ -83,7 +83,6 @@ def find_first_set(barr):
     return None
 
 class PauliBytes(object):
-
     def __init__(self, n_qubits, bin_string, phase=0):
         self.n_qubits = n_qubits
         self.phase = phase
@@ -248,6 +247,20 @@ class StabilizerMatrix(object):
     def random(cls, n_qubits):
         return cls([PauliBytes.random(n_qubits) for i in range(n_qubits)])
 
+    def set_phase(self, phase):
+      phase_string = None
+      if isinstance(phase, int):
+        phase_string = bin(phase)[2:].zfill(self.n_qubits)
+      elif isinstance(phase, str):
+        phase_string = phase.zfill(n_qubits)
+      if phase_string:
+        [self.paulis[i].phase = 1 if bit =='1' else
+         self.paulis[i].phase = 0 for i, bit in enumerate(phase_string)]
+      elif isinstance(phase, np.ndarray):
+        [self.paulis[i].phase = 1 if bit == 1 else
+         self.paulis[i].phase = 0 for i, bit in enumerate(phase)]
+      else:
+        raise TypeError("set_phase expects an integer, binary string, or numpy array")
 
     def get_projector(self):
         eye = qeye(pow(2,self.n_qubits))
@@ -266,3 +279,24 @@ class StabilizerMatrix(object):
             vec = vec / (np.linalg.norm(vec, 2))
             return vec
         return None
+
+def get_states_from_groups(groups, n_states):
+  n_qubits = groups[0].n_qubits
+  phases = pow(2,n_qubits)
+  states = []
+  append_state = states.append
+  n_found = 0
+  for p in range(phases):
+    p_string = bin(p)[2:].zfill(n_qubits)
+    for g in groups:
+      g.set_phase(p_string)
+      append_state(g.get_stabilizer_state())
+      n_found +=1
+      if n_found >= n_states:
+        break
+  if n_found < n_states:
+    raise ValueError("Unable to generate sufficient stabilizer states.")
+  return states
+
+def generate_groups(n_qubits):
+  pass
