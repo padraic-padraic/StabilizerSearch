@@ -278,6 +278,12 @@ class StabilizerMatrix(object):
     def __neq__(self, other):
         return (not self.__eq__(other))
 
+    def is_real(self):
+        if any(not(p.is_real()) for p in self.paulis):
+            return False
+        else:
+            return True
+
     @classmethod
     def random(cls, n_qubits):
         return cls([PauliBytes.random(n_qubits) for i in range(n_qubits)])
@@ -348,9 +354,9 @@ def get_states_from_groups(groups, n_states):
     return states
 
 @jit
-def generate_groups(n_qubits, n_groups=None):
+def generate_groups(n_qubits, n_groups=None, real_only=False):
     dim = pow(2, n_qubits)
-    paulis = [PauliBytes(n_qubits, [True if b=='1' else False 
+    paulis = [PauliBytes(n_qubits, [True if b == '1' else False 
                                        for b in bin(x)[2:].zfill(2 * n_qubits)])
                             for x in range(1, dim)]
     shuffle(paulis)
@@ -363,9 +369,14 @@ def generate_groups(n_qubits, n_groups=None):
         candidate = StabilizerMatrix([p for p in pauli_set])
         candidate.to_canonical_form()
         candidate.set_phase(0)
+        if real_only:
+            if not candidate.is_real():
+                continue
         if candidate not in groups:
             append_group(candidate)
             group_count += 1
         if group_count >= n_groups:
             break
+    if group_count < n_groups:
+        raise ValueError("Couldn't find enough stabilizer groups.")
     return groups

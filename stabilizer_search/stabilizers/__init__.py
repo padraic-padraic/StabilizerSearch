@@ -9,14 +9,13 @@ from .smatrix import *
 from ..core import n_stabilizer_states, SEEDED_RANDOM
 
 
-DIR = split(realpath(__file__))
+DIR = split(realpath(__file__))[0]
 
 if not SEEDED_RANDOM:
     seed()
     SEEDED_RANDOM=True
 
 
-@jit
 def get_blocks_and_lines(file_path, delimiter):
     file = open(file_path, 'r')
     lines = file.readlines()
@@ -24,7 +23,7 @@ def get_blocks_and_lines(file_path, delimiter):
     block_starts = np.array([i for i, l in enumerate(lines) if l == delimiter])
     return (block_starts, lines)
 
-@jit(nopython=True)
+# @jit
 def parse_states(block_starts, lines, n_qubits, n_states=None, real_only=False):
     block_dim = pow(2,n_qubits)+1
     shuffle(block_starts)
@@ -34,7 +33,7 @@ def parse_states(block_starts, lines, n_qubits, n_states=None, real_only=False):
     for s in block_starts:
         state = np.array([float(val[0])+1j*float(val[1]) for val in
                             [line.strip('()').split(', ') for line in 
-                                                          lines[s:s+block_dim]]
+                                                          lines[s+1:s+block_dim]]
                         ])
         if real_only:
             if np.any(np.imag(state)):
@@ -68,7 +67,11 @@ def parse_groups(block_starts, lines, n_qubits, n_groups=None, real_only=False):
     return groups
 
 def load_states(n_qubits, n_states=None, real_only=False):
+    # ext = path_join('./data','{}.states'.format(n_qubits))
+    # print(DIR)
+    # print(ext)
     file_path = path_join(DIR,'data','{}.states'.format(n_qubits))
+    print(file_path)
     if not path_exists(file_path):
         return None #Generate...? Return None is probably the simplest.
     block_starts, lines = get_blocks_and_lines(file_path, 'STATE')

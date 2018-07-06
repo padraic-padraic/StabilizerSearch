@@ -1,7 +1,10 @@
+from random import seed
+
 from .linalg import *
 from .unitaries import *
 
-SEEDED_RANDOM = False
+seed()
+SEEDED_RANDOM = True
 
 def n_stabilizer_states(n_qubits):
     """Calculate the number of unique Stabilizer States for a given number of

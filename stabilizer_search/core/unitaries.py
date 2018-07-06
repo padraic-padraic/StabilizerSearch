@@ -2,14 +2,15 @@
 
 from cmath import exp as cexp
 from math import asin, cos, pi, sin, sqrt
+from numba import jit
 from random import random
 
 import numpy as np
 
 
-__all__=['qeye', 'X', 'Y', 'Z', 'S', 'H', 'T', 'hrandom_su2']
+__all__=['qeye', 'Id', 'X', 'Y', 'Z', 'S', 'H', 'T', 'hrandom_su2']
 
-
+@jit(nopython=True)
 def qeye(n):
     return np.eye(n, dtype=np.complex_)
 
