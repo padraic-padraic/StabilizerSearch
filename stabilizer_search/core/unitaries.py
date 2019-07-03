@@ -2,6 +2,7 @@
 
 from cmath import exp as cexp
 from math import asin, cos, pi, sin, sqrt
+from numba import jit
 from random import random
 
 import numpy as np

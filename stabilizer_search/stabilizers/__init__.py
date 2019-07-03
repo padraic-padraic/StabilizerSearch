@@ -1,3 +1,10 @@
+from math import ceil
+from numba import jit
+from os.path import exists as path_exists, join as path_join, split, realpath
+from random import shuffle, seed
+
+import numpy as np
+
 from .smatrix import *
 from ..core import n_stabilizer_states, SEEDED_RANDOM
 
@@ -16,7 +23,6 @@ if not SEEDED_RANDOM:
     SEEDED_RANDOM = True
 
 
-@jit
 def get_blocks_and_lines(file_path, delimiter):
     file = open(file_path, 'r')
     lines = file.readlines()

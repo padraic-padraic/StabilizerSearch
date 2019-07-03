@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from ..core import n_stabilizer_states
 from ..core.linalg import int_to_bits, tensor
 from ..core.unitaries import Id, X, Y, Z, qeye
@@ -44,12 +45,11 @@ CHAR_PARITIES = np.array([
                1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1,
                0, 1, 1, 0], dtype=np.uint8)
 
-__all__ = ['PauliBytes', 'StabilizerMatrix']
-
 P_LITERALS = ['I', 'Z', 'X', 'Y']
 
 P_MATRICES = [Id, Z, X, Y]
 
+<<<<<<< HEAD
 ZERO = np.uint8(0)
 ONE = np.uint8(1)
 
@@ -137,6 +137,18 @@ class PauliBytes(object):
         p_string = ''.join([
             P_LITERALS[indices[i]] for i in range(self.n_qubits)])
         return p_string
+
+    def __eq__(self, other):
+        if self.n_qubits != other.n_qubits:
+            return False
+        if not np.array_equal(self.xbytes, other.xbytes):
+            return False
+        if not np.array_equal(self.zbytes, other.zbytes):
+            return False
+        return True
+
+    def __neq__(self, other):
+        return (not self.__eq__(other))
 
     @property
     def weight(self):
@@ -267,7 +279,7 @@ class StabilizerMatrix(object):
         if isinstance(phase, int):
             if phase >= pow(2, self.n_qubits):
                 raise IndexError("Phase num is larger than the group.")
-            phase_string = bin(phase)[2:].zfill(self.n_qubits)
+            phase_string = bin(phase)[2:].zfill(len(self.paulis))
         elif isinstance(phase, str):
             if len(phase) > self.n_qubits:
                 raise IndexError("Phase string is larger than the group.")
@@ -298,6 +310,7 @@ class StabilizerMatrix(object):
         return proj
 
     def get_stabilizer_state(self):
+        dim = pow(2, self.n_qubits)
         projector = self.get_projector()
         vals, vecs = np.linalg.eigh(projector)
         vals = np.abs(vals)
@@ -350,13 +363,15 @@ def generate_groups(n_qubits, n_groups=None):
     if n_groups is None:
         n_groups = n_stabilizer_states(n_qubits)/dim
     append_group = groups.append
-    for strings in combinations(b_strings, n_qubits):
-        candidate = StabilizerMatrix([PauliBytes(s) for s in strings])
+    for pauli_set in combinations(paulis, n_qubits):
+        candidate = StabilizerMatrix([p for p in pauli_set])
         candidate.to_canonical_form()
         candidate.set_phase(0)
         if candidate not in groups:
             append_group(candidate)
             group_count += 1
-        if group_count == n_groups:
+        if group_count >= n_groups:
             break
+    if group_count < n_groups:
+        raise ValueError("Couldn't find enough stabilizer groups.")
     return groups
