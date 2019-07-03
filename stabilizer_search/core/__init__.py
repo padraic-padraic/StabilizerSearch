@@ -3,6 +3,7 @@ from .unitaries import *
 
 SEEDED_RANDOM = False
 
+
 def n_stabilizer_states(n_qubits):
     """Calculate the number of unique Stabilizer States for a given number of
     qubits."""

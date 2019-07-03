@@ -1,9 +1,0 @@
-[submodule "stabilizer_search/clib/eigen"]
-	path = stabilizer_search/clib/eigen
-	url = git@github.com:RLovelett/eigen.git
-[submodule "stabilizer_search/clib/dynamic_bitset"]
-	path = stabilizer_search/clib/dynamic_bitset
-	url = git@github.com:boostorg/dynamic_bitset.git
-[submodule "stabilizer_search/clib/StabilizerCPP"]
-	path = stabilizer_search/clib/StabilizerCPP
-	url = git@github.com:padraic-padraic/StabilizerCPP.git

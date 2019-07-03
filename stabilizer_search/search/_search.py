@@ -1,5 +1,6 @@
 from ._result import _Result
 
+
 def dummy_func(n_qubits, target_state, *args, **kwargs):
     """Dummy method for the search class."""
     print("This should be overridden yo.")
@@ -15,6 +16,8 @@ class _Search(object):
     Result_Class = _Result
     func = staticmethod(dummy_func)
 
+    default_kwargs = ()
+
     def __init__(self, target_state, target_state_string,
                  n_qubits, *args, **kwargs):
         self.target_state = target_state
@@ -22,9 +25,14 @@ class _Search(object):
         self.n_qubits = n_qubits
         self.f_args = args
         self.f_kwargs = kwargs
+        for kwarg, value in self.default_kwargs:
+            self.f_kwargs.setdefault(kwarg, value)
 
     def __call__(self):
-        success, chi, decomposition = self.func(self.n_qubits, self.target_state,
-                                           *self.f_args, **self.f_kwargs)
+        success, chi, decomposition = self.func(
+            self.n_qubits,
+            self.target_state,
+            *self.f_args,
+            **self.f_kwargs)
         return self.Result_Class(self.target_state_string, self.n_qubits,
                                  chi, success, decomposition)

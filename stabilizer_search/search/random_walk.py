@@ -1,91 +1,69 @@
 from math import exp
 from six import PY2
-from random import random, randint, randrange
+from random import random, randrange
 
 from ._search import _Search
 from ._result import _Result
-from .cy_do_random_walk import cy_do_random_walk
-from ..linalg import get_projector
-from ..mat import qeye
-from ..stabilizers import get_stabilizer_states
-from ..stabilizers.utils import array_to_pauli
+from ..core.linalg import get_projector, np_inc_in_list
+from ..core.linalg import projection_distance, subspace_distance
+from ..stabilizer import random_pauli_matrix
+from ..stabilizer.seed_states import *
 
 import numpy as np
-import sys
-
-def test_real(n_qubits, bits):
-    x_bits, z_bits = bits[:n_qubits], bits[n_qubits:]
-    _sum = 0
-    for i in range(n_qubits):
-        if x_bits[i]&z_bits[1]:
-            _sum +=1
-    return _sum%2==0
 
 
-def random_pauli(n_qubits, real_only=False):
-    while True:
-        base = bin(randint(1, pow(2, 2*n_qubits)))[2:]
-        bits = '0'*(2*n_qubits - len(base)) + base
-        bits = np.array([b == '1' for b in bits])
-        if real_only:
-            if test_real(n_qubits, bits):
-                break
-        else:
-            break
-    pauli = array_to_pauli(bits)
-    if random() > 0.5:
-        return -1* pauli
-    return pauli
-
-def do_random_walk(n_qubits, target_state, chi, **kwargs):
-    # print('Searching with chi={}'.format(chi))
-    if target_state.size > target_state.shape[0]:
-        is_state = False
-    else:
-        is_state = True
-    beta = kwargs.pop('beta_init', 1)
-    beta_max = kwargs.pop('beta_max', 4000)
-    anneal_steps = kwargs.pop('steps', 100)
-    beta_diff = (beta_max-beta)/anneal_steps
-    walk_steps = kwargs.pop('M', 1000)
-    real = np.any(np.imag(target_state))
-    stabilizers = get_stabilizer_states(n_qubits, chi, real_only=real)
-    I = qeye(pow(2, n_qubits))
-    projector = get_projector([s for s in stabilizers])
-    if is_state:
-        distance = 1-np.linalg.norm(projector*target_state, 2)
-    else:
-        distance = np.linalg.norm(projector - target_state)
-    while beta <= beta_max:
-        # print("Anneal Progress : {}%".format((beta-1)/beta_diff))
+def do_random_walk(n_qubits, stabilizer_states, target, distance_func,
+                   beta_init=1, beta_max=4000, anneal_steps=100,
+                   walk_steps=1000, real_only=False):
+    projector = get_projector(stabilizer_states)
+    distance = distance_func(target, projector)
+    step_size = (beta_max-beta_init)/anneal_steps
+    chi = len(stabilizer_states)
+    betas = np.arange(beta_init, beta_max+step_size, step_size)
+    Id = np.identity(pow(2, n_qubits), dtype=np.complex128)
+    for beta in betas:
         for i in range(walk_steps):
             if np.allclose(distance, 0.):
-                return True, chi, stabilizers
+                return True, len(stabilizer_states), stabilizer_states
             while True:
-                move = random_pauli(n_qubits, real_only=True)
+                move = (Id + random_pauli_matrix(n_qubits, real_only))
                 move_target = randrange(chi)
-                new_state = (I+move) * stabilizers[move_target]
-                if not np.allclose(new_state, 0.): #Accept the move only if the resulting state is not null!
+                new_state = move @ stabilizer_states[move_target]
+                if not np.any(np.nonzero(new_state)):
+                    continue
+                new_state = np.divide(new_state, np.linalg.norm(new_state, 2))
+                if not np_inc_in_list(new_state, stabilizer_states):
                     break
-            new_state = new_state / np.linalg.norm(new_state, 2)
-            new_projector = get_projector([s if n != move_target 
-                                            else new_state for n, s in 
-                                            enumerate(stabilizers)])
-            if is_state:
-                new_distance = 1- np.linalg.norm(new_projector*target_state, 2)
-            else:
-                new_distance = np.linalg.norm(new_projector-target_state)
-            # print('New Overlap is {}'.format(new_overlap))
-            if new_distance < distance:
+            new_projector = get_projector([
+                s if index != move_target else new_state
+                for index, s in enumerate(stabilizer_states)
+            ])
+            new_distance = distance_func(target, new_projector)
+            diff = new_distance - distance
+            if diff < 0 or random() < exp(-1*beta*diff):
                 distance = new_distance
-                stabilizers[move_target] = new_state
-            else:
-                p_accept = exp(-beta*(new_distance - distance))
-                if random() < p_accept:
-                    distance = new_distance
-                    stabilizers[move_target] = new_state
-        beta += beta_diff
+                stabilizer_states[move_target] = new_state
     return False, chi, None
+
+
+def random_walker(n_qubits, target, chi, **kwargs):
+    real_only = kwargs.pop(
+        'real_only',
+        np.all(np.nonzero(np.imag(target))))
+    seed = kwargs.pop('seed', 'random')
+    if seed == 'random':
+        inital_states = random_stabilizer_states(n_qubits, chi, real_only)
+    elif seed == 'product':
+        inital_states = random_prodct_states(n_qubits, chi, real_only)
+    else:
+        initial_states = random_computational_states(n_qubits, chi)
+    if target.size() > target.shape[0]:
+        distance_func = subspace_distance
+    else:
+        distance_func = projection_distance
+    do_random_walk(n_qubits, initial_states, target, distance_func,
+                   real_only=real_only, **kwargs)
+
 
 class RandomWalkResult(_Result):
     ostring = """
@@ -112,7 +90,7 @@ class RandomWalkResult(_Result):
 
 class RandomWalkSearch(_Search):
     Result_Class = RandomWalkResult
-    func = staticmethod(cy_do_random_walk)
+    func = staticmethod(random_walker)
 
     def __init__(self, *args, **kwargs):
         _f = kwargs.pop('func', None)
@@ -122,4 +100,3 @@ class RandomWalkSearch(_Search):
             super(RandomWalkSearch, self).__init__(*args, **kwargs)
         else:
             super().__init__(*args, **kwargs)
-
