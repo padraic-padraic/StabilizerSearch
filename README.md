@@ -3,6 +3,8 @@
 
 This package contains code for generating stabilizer states, as numpy matrices, and for searching for stabilizer rank decompositions. The package also includes data files for stabilizer states on 1-4 qubits. 
 
+** Important Note: This package is 'between versions' right now; there are some issues with the implementation of canonical tableaux, and it's not well documented. Fixes are coming shortly! **
+
 ---
 
 
